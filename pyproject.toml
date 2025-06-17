@@ -1,0 +1,13 @@
+[project]
+name = "dataset-ec2-load-benchmarks"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11.9"
+dependencies = [
+    "polars>=1.30.0",
+    "pytest>=8.4.0",
+    "torch>=2.7.1",
+    "torchaudio>=2.7.1",
+    "torchvision>=0.22.1",
+]

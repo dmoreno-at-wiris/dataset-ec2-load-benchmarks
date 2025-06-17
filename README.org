@@ -1,0 +1,52 @@
+* Benchmarks for the dataset loading to an EC2
+
+** Description
+
+The purpose of this project is to measure different possibilities or solutions
+to load and store the ML datasets used to train a model.
+
+*** Solutions
+
+**** Given S3 initial storage - Dataset as it is
+
+***** Download complete dataset before training (S3 sync)
+
+***** Download samples when needed during training
+
+**** Given S3 initial storage - Dataset compressed
+
+***** Download complete dataset before training (S3 sync)
+
+**** Given S3 initial storage - Dataset compressed as a parquet file
+
+***** Download complete dataset before training (polars)
+
+***** Lazy load samples when needed during training (polars)
+
+**** Given EBS initial storage - Dataset as it is
+
+**** Given EBS initial storage - Dataset Dataset compressed
+
+**** Given EBS initial storage - Dataset Dataset compressed as a parquet file
+
+**** Given EFS initial storage - Dataset as it is
+
+**** Given EFS initial storage - Dataset Dataset compressed
+
+**** Given EFS initial storage - Dataset Dataset compressed as a parquet file
+
+*** Metrics to take into account
+
+- Cost
+- Memory usage
+- Dataset load time
+- Complete dataset download time
+- Dataset download time per sample
+- Time per epoch
+
+** Storage options comparison
+
+|----+-----+-----+--------|
+| S3 | EBS | EFS | Lustre |
+|----+-----+-----+--------|
+|    |     |     |        |
