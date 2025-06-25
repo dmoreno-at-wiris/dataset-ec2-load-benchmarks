@@ -7,11 +7,89 @@ to load and store the ML datasets used to train a model.
 
 *** Solutions
 
+**** Given local storage - Dataset as it is
+
+Executed as:
+
+#+begin_src python
+  train_local_dataset = LocalFSDataset(
+        datasets_path=Path("<LOCAL_PATH_TO_DATASETS>"),
+        data_annotation_file_path=Path(
+            "strokes/wiris-math-online-incomplete/train_21082019.txt"
+        ),
+    )
+
+    train_local_dataloader = DataLoader(
+        train_local_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+    )
+
+    local_fs_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.S3,
+        load_as=DatasetMode.FILES,
+        dataloader=train_local_dataloader,
+        iterations_number=1,
+    )
+
+    local_fs_benchmark.measure()
+#+end_src
+
+****** Timing results
+
+Training one epoch elapsed time: 61.3527 seconds
+
 **** Given S3 initial storage - Dataset as it is
 
 ***** Download complete dataset before training (S3 sync)
 
+Executed as:
+
+#+begin_src shell
+  ./scripts/sync_data_s3.sh
+#+end_src
+
+****** Timing results
+
+real    711m24,980s --> 42684,980s
+user    329m24,327s
+sys     35m21,112s
+
 ***** Download samples when needed during training
+
+Executed as:
+
+#+begin_src python
+  train_s3_dataset = S3FSDataset(
+        s3_bucket_name="wiris-ml-datasets",
+        data_annotation_file_path=Path(
+            "files/strokes/wiris-math-online-incomplete/train_21082019.txt"
+        ),
+    )
+
+    train_s3_dataloader = DataLoader(
+        train_s3_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+    )
+
+    s3_fs_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.S3,
+        load_as=DatasetMode.FILES,
+        dataloader=train_s3_dataloader,
+        iterations_number=1,
+    )
+
+    s3_fs_benchmark.measure()
+#+end_src
+
+****** Timing results
+
+Training one epoch elapsed time: 22223.2921 seconds
 
 **** Given S3 initial storage - Dataset compressed
 
