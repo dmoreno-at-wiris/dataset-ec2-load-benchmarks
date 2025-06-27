@@ -39,7 +39,9 @@ Executed as:
 
 ****** Timing results
 
+#+begin_export ascii
 Training one epoch elapsed time: 61.3527 seconds
+#+end_export
 
 **** Given S3 initial storage - Dataset as it is
 
@@ -53,9 +55,11 @@ Executed as:
 
 ****** Timing results
 
+#+begin_export ascii
 real    711m24,980s --> 42684,980s
 user    329m24,327s
 sys     35m21,112s
+#+end_export
 
 ***** Download samples when needed during training
 
@@ -89,7 +93,9 @@ Executed as:
 
 ****** Timing results
 
+#+begin_export ascii
 Training one epoch elapsed time: 22223.2921 seconds
+#+end_export
 
 **** Given S3 initial storage - Dataset compressed
 
@@ -100,6 +106,36 @@ Training one epoch elapsed time: 22223.2921 seconds
 ***** Download complete dataset before training (polars)
 
 ***** Lazy load samples when needed during training (polars)
+
+#+begin_src python
+  train_s3_df_dataset = S3ParquetDataset(
+        s3_bucket_name="wiris-ml-datasets",
+        dataset_file_path=Path(
+            "df/strokes/wiris-math-online-incomplete/train_21082019.parquet"
+        ),
+    )
+
+    train_s3_df_dataloader = DataLoader(
+        train_s3_df_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+    )
+
+    s3_df_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.S3,
+        load_as=DatasetMode.DF,
+        dataloader=train_s3_df_dataloader,
+        iterations_number=1,
+    )
+
+    s3_df_benchmark.measure()
+#+end_src
+
+#+begin_export ascii
+Elapsed time: 249.4792 seconds
+#+end_export
 
 **** Given EBS initial storage - Dataset as it is
 
