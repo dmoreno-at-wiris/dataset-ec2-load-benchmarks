@@ -32,6 +32,7 @@ class DatasetLoadBenchmark:
     # dataset: Dataset
     dataloader: DataLoader
     iterations_number: int = 4
+    train_epochs: int = 1
 
     # train_features: ClassVar[Iterable]
     # train_labels: ClassVar[Iterable]
@@ -44,11 +45,15 @@ class DatasetLoadBenchmark:
 
     def train_mock(self) -> float:
         t = Timer(name=f"{self.load_from}-{self.load_as}-train-mock")
-        t.start()
-        # for train_features, train_labels in tqdm(self.dataloader):
-        for train_features, train_labels in tqdm(self.dataloader):
-            pass
-        return t.stop()
+        sum_t = 0
+        for epoch in range(self.train_epochs):
+            t.start()
+            # for train_features, train_labels in tqdm(self.dataloader):
+            for train_features, train_labels in tqdm(self.dataloader):
+                pass
+            sum_t += t.stop()
+        mean_t = sum_t / self.iterations_number
+        return mean_t
 
     def measure(self) -> float:
         sum_t = 0
