@@ -1,6 +1,7 @@
 from typing import List
 import logging
 from pathlib import Path
+import json
 
 # from s3fs import S3FileSystem
 import polars as pl
@@ -37,7 +38,9 @@ def load_data_annotation(
         raise e
 
 
-def load_sample(sample_path: str, file_loader: FSFileLoader = FSFileLoader()) -> str:
+def load_sample(
+    sample_path: str, file_loader: FSFileLoader = FSFileLoader()
+) -> List[List[List[float]]]:
     # logging.debug(f"Sample path to load: {self.s3_bucket_name}{sample_path}")
 
     try:
@@ -46,7 +49,9 @@ def load_sample(sample_path: str, file_loader: FSFileLoader = FSFileLoader()) ->
             mode="r",
         ) as f:
             sample = f.read()
-        return sample
+            if sample:
+                return json.loads(sample)
+            return []
     except Exception as e:
         logging.error(f"Error loading {sample_path}")
         logging.error(e)
@@ -81,22 +86,30 @@ def strokes_dataset_to_df(
         .with_columns(
             pl.col("sample_path")
             .str.replace("^./", f"{dataset_file_path.parent}/")
-            .map_elements(load_sample, return_dtype=pl.String)
+            .map_elements(
+                load_sample, return_dtype=pl.List(pl.List(pl.List(pl.Float64)))
+            )
+            # .map_elements(load_sample, return_dtype=pl.List)
+            # .map_elements(load_sample, return_dtype=pl.List(pl.Float64))
             .alias("sample"),
         )
     )
     print(train_df.head())
     print(train_df.collect_schema().names())
 
+    logging.info(f"data/{dataset_parquet_path}")
+    train_df.write_parquet(
+        Path(f"data/{dataset_parquet_path.name}"),
+        compression="zstd",
+        compression_level=22,
+    )
     logging.info(f"Writing s3://{s3_bucket_name}/{dataset_parquet_path}")
     train_df.write_parquet(
         f"s3://{s3_bucket_name}/{dataset_parquet_path}",
+        compression="zstd",
+        compression_level=22,
         storage_options={"aws_region": "eu-central-1"},
     )
-    # fs = S3FileSystem()
-    # with fs.open(f"s3://{s3_bucket_name}/{dataset_parquet_path}", mode='wb') as f:
-    #     train_df.write_parquet(f)
-    #     pass
 
 
 strokes_dataset_to_df(
