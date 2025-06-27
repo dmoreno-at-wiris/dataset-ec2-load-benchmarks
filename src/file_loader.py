@@ -3,6 +3,7 @@ from typing import ClassVar, Optional, Dict, IO
 from dataclasses import dataclass
 from pathlib import Path
 from io import IOBase
+import logging
 
 from s3fs import S3FileSystem
 import polars as pl
@@ -35,6 +36,7 @@ class FSFileLoader(fileLoader):
     def load(
         self, file_path: Path, mode: str = "r", encoding: Optional[str] = None
     ) -> IO:
+        logging.info(f"Loading {file_path}...")
         return file_path.open(
             mode=mode,
             encoding=encoding,
@@ -49,6 +51,7 @@ class S3FileLoader(fileLoader):
     def load(
         self, file_path: Path, mode: str = "r", encoding: Optional[str] = None
     ) -> IOBase:
+        logging.info(f"Loading {file_path}...")
         return self.fs.open(
             f"s3://{self.s3_bucket_name}/{file_path}",
             mode=mode,
@@ -61,6 +64,7 @@ class S3CSVLoader(fileLoader):
     s3_bucket_name: str
 
     def load(self, file_path: Path, schema: Optional[Dict] = None) -> pl.LazyFrame:
+        logging.info(f"Loading {file_path}...")
         return pl.scan_csv(
             f"s3://{self.s3_bucket_name}/{file_path}",
             schema=schema,
@@ -79,6 +83,7 @@ class S3ParquetLoader(fileLoader):
         schema: Optional[Dict] = None,
         aws_region: str = "eu-central-1",
     ) -> pl.LazyFrame:
+        logging.info(f"Loading {file_path}...")
         return pl.scan_parquet(
             f"s3://{self.s3_bucket_name}/{file_path}",
             schema=schema,
