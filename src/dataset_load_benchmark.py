@@ -52,7 +52,7 @@ class DatasetLoadBenchmark:
             for train_features, train_labels in tqdm(self.dataloader):
                 pass
             sum_t += t.stop()
-        mean_t = sum_t / self.iterations_number
+        mean_t = sum_t / self.train_epochs
         return mean_t
 
     def measure(self) -> float:
