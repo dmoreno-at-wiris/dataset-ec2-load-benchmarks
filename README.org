@@ -1,4 +1,4 @@
-* Benchmarks for the dataset loading to an EC2
+* Benchmarks for the dataset ingest to an EC2
 
 ** Description
 
@@ -45,7 +45,7 @@ Training one epoch elapsed time: 61.3527 seconds
 
 **** Given S3 initial storage - Dataset as it is
 
-***** Download complete dataset before training (S3 sync)
+***** Download complete bucket before training (S3 sync)
 
 Executed as:
 
@@ -60,6 +60,37 @@ real    711m24,980s --> 42684,980s
 user    329m24,327s
 sys     35m21,112s
 #+end_export
+
+***** Download dataset before training (S3 sync)
+
+Executed as:
+
+#+begin_src shell
+  time aws s3 sync s3://wiris-ml-datasets/files/strokes/wiris-math-online-incomplete data
+#+end_src
+
+****** Timing results
+
+#+begin_export ascii
+real	255m25,533s --> 15325,533s
+user	131m8,921s
+sys	15m57,063s
+#+end_export
+
+***** Download dataset before training (DVC get)
+
+Executed as:
+
+#+begin_src shell
+  # time dvc get s3://wiris-ml-datasets/files/strokes/wiris-math-online-incomplete data
+#+end_src
+
+****** Timing results
+
+#+begin_export ascii
+
+#+end_export
+
 
 ***** Download samples when needed during training
 
@@ -101,6 +132,8 @@ Training one epoch elapsed time: 22223.2921 seconds
 
 ***** Download complete dataset before training (S3 sync)
 
+***** [[https://github.com/webdataset/webdataset][WebDataset]]
+
 **** Given S3 initial storage - Dataset compressed as a parquet file
 
 ***** Download complete dataset before training (polars)
@@ -138,6 +171,8 @@ Elapsed time: 249.4792 seconds
 #+end_export
 
 **** Given EBS initial storage - Dataset as it is
+
+**** Given EBS + NVMe (AWS Nitro) initial storage - Dataset as it is
 
 **** Given EBS initial storage - Dataset Dataset compressed
 

@@ -8,8 +8,9 @@ import polars as pl
 from tqdm import tqdm
 
 from src.file_loader import FSFileLoader
+from src.timer import Timer
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 def load_data_annotation(
@@ -58,6 +59,7 @@ def load_sample(
         raise e
 
 
+@Timer(name="Dataset transformation to polars df as parquet file")
 def strokes_dataset_to_df(
     dataset_file_path: Path, dataset_parquet_path: Path, s3_bucket_name: str
 ):
@@ -101,23 +103,26 @@ def strokes_dataset_to_df(
     train_df.write_parquet(
         Path(f"data/{dataset_parquet_path.name}"),
         compression="zstd",
+        # compression_level=22,
         compression_level=22,
+        partition_chunk_size_bytes=500000,
     )
     logging.info(f"Writing s3://{s3_bucket_name}/{dataset_parquet_path}")
     train_df.write_parquet(
         f"s3://{s3_bucket_name}/{dataset_parquet_path}",
         compression="zstd",
         compression_level=22,
+        partition_chunk_size_bytes=500000,
         storage_options={"aws_region": "eu-central-1"},
     )
 
 
 strokes_dataset_to_df(
     dataset_file_path=Path(
-        "/home/daniel/ML/data/strokes/wiris-math-online-incomplete/train_21082019.txt"
+        "data/strokes/wiris-math-online-incomplete/train_21082019.txt"
     ),
     dataset_parquet_path=Path(
-        "df/strokes/wiris-math-online-incomplete/train_21082019.parquet"
+        "df/strokes/wiris-math-online-incomplete/train_21082019.sharded.parquet"
     ),
     s3_bucket_name="wiris-ml-datasets",
 )

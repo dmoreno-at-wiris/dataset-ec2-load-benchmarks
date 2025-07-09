@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11.9"
 dependencies = [
     "boto3>=1.38.40",
+    "dvc>=3.60.1",
     "polars>=1.30.0",
     "pytest>=8.4.0",
     "s3fs>=0.4.2",
@@ -13,8 +14,12 @@ dependencies = [
     "torchaudio>=2.7.1",
     "torchvision>=0.22.1",
     "tqdm>=4.67.1",
+    "webdataset>=1.0.2",
 ]
 
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+include = ["src", "scripts", "main.py"]
+# exclude = ["data",]
+# ignore = ["data"]

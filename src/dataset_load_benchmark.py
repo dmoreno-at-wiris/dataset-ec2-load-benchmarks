@@ -22,6 +22,7 @@ class DatasetMode(Enum):
     FILES = 0
     DF = 1
     COMPRESSED = 2
+    WDS = 3
     OTHER = -1
 
 
