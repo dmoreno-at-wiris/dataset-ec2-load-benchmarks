@@ -10,6 +10,8 @@ import gc
 from memory_profiler import profile
 from rich import print, table, markdown
 
+from src.ubiquitous_datasets import UbiquitousDataset
+
 # from src.s3_files_dataset.s3_fs_dataset import S3FSDataset
 from src.local_dataset.local_fs_dataset import LocalFSDataset
 from src.local_dataset.local_df_dataset import LocalParquetDataset
@@ -19,6 +21,38 @@ from src.dataset_load_benchmark import DatasetLoadBenchmark, DatasetSource, Data
 from src.timer import Timer
 
 # logging.basicConfig(level=logging.DEBUG)
+
+
+def benchmark(
+    benchmark_name: str,
+    benchmarks_log_table: table.Table,
+    dataset: UbiquitousDataset,
+    load_from: DatasetSource,
+    load_as: DatasetMode,
+):
+    train_local_dataloader = DataLoader(
+        dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+    )
+
+    local_fs_benchmark = DatasetLoadBenchmark(
+        load_from=load_from,
+        load_as=load_as,
+        dataloader=train_local_dataloader,
+        log_table=benchmarks_log_table,
+        benchmark_name=benchmark_name,
+        iterations_number=1,
+    )
+
+    local_fs_benchmark.measure()
+
+    del local_fs_benchmark
+    del train_local_dataloader
+    del dataset
+    gc.collect()
 
 
 @profile
@@ -40,29 +74,13 @@ def main():
         ),
     )
 
-    train_local_dataloader = DataLoader(
-        train_local_dataset,
-        batch_size=32,
-        num_workers=8,
-        prefetch_factor=4,
-        pin_memory=cuda.is_available(),
-    )
-
-    local_fs_benchmark = DatasetLoadBenchmark(
+    benchmark(
+        benchmark_name=benchmark_name,
+        benchmarks_log_table=benchmarks_log_table,
+        dataset=train_local_dataset,
         load_from=DatasetSource.DISK,
         load_as=DatasetMode.FILES,
-        dataloader=train_local_dataloader,
-        log_table=benchmarks_log_table,
-        benchmark_name=benchmark_name,
-        iterations_number=1,
     )
-
-    local_fs_benchmark.measure()
-
-    del local_fs_benchmark
-    del train_local_dataloader
-    del train_local_dataset
-    gc.collect()
 
     # NOTE: Local Parquet
     benchmark_name = "Local Parquet (data/train_21082019.parquet)"
