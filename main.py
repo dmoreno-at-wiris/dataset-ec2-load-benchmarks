@@ -1,6 +1,5 @@
 # from typing import List, cast
 # import logging
-import logging
 from pathlib import Path
 
 from torch.utils.data import DataLoader
@@ -23,7 +22,6 @@ from src.timer import Timer
 
 @profile
 def main():
-    print("Hello from dataset-ec2-load-benchmarks!")
     benchmarks_log_table = table.Table(title="Mean (mock) training time")
     benchmarks_log_table.add_column("Benchmark", justify="left")
     benchmarks_log_table.add_column("Dataset source", justify="center")
