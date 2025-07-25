@@ -7,6 +7,7 @@ import logging
 
 from s3fs import S3FileSystem
 import polars as pl
+
 import dvc.api
 
 
@@ -39,7 +40,7 @@ class FSFileLoader(fileLoader):
     def load(
         self, file_path: Path, mode: str = "r", encoding: Optional[str] = None
     ) -> IO:
-        logging.info(f"Loading {file_path}...")
+        logging.debug(f"Loading {file_path}...")
         return file_path.open(
             mode=mode,
             encoding=encoding,
@@ -54,7 +55,7 @@ class S3FileLoader(fileLoader):
     def load(
         self, file_path: Path, mode: str = "r", encoding: Optional[str] = None
     ) -> IOBase:
-        logging.info(f"Loading {file_path}...")
+        logging.debug(f"Loading {file_path}...")
         return self.fs.open(
             f"s3://{self.s3_bucket_name}/{file_path}",
             mode=mode,
@@ -64,7 +65,7 @@ class S3FileLoader(fileLoader):
     def cp_to_s3(
         self, file_path: Path, copy_path: Optional[Path] = None, recursive: bool = False
     ) -> None:
-        logging.info(f"Copying {file_path}...")
+        logging.debug(f"Copying {file_path}...")
         if copy_path:
             return self.fs.cp(
                 f"{file_path}",
@@ -83,7 +84,7 @@ class S3CSVLoader(fileLoader):
     s3_bucket_name: str
 
     def load(self, file_path: Path, schema: Optional[Dict] = None) -> pl.LazyFrame:
-        logging.info(f"Loading {file_path}...")
+        logging.debug(f"Loading {file_path}...")
         return pl.scan_csv(
             f"s3://{self.s3_bucket_name}/{file_path}",
             schema=schema,
@@ -99,7 +100,7 @@ class LocalParquetLoader(fileLoader):
         file_path: Path,
         schema: Optional[Dict] = None,
     ) -> pl.LazyFrame:
-        logging.info(f"Loading {file_path}...")
+        logging.debug(f"Loading {file_path}...")
         return pl.scan_parquet(
             file_path,
             schema=schema,
@@ -117,13 +118,18 @@ class S3ParquetLoader(fileLoader):
         schema: Optional[Dict] = None,
         aws_region: str = "eu-central-1",  # TODO: Consider moving the region as part of the Object definition instead of being a class parameter
     ) -> pl.LazyFrame:
-        logging.info(f"Loading {file_path}...")
+        logging.debug(f"Loading {file_path}...")
         return pl.scan_parquet(
             f"s3://{self.s3_bucket_name}/{file_path}",
             schema=schema,
             # ignore_errors = True,
             storage_options={"aws_region": aws_region},
         )
+
+
+# TODO: PyArrow Loader if needed?
+
+# TODO: HFLoader if needed?
 
 
 @dataclass
@@ -139,7 +145,7 @@ class DVCLoader(fileLoader):
         mode: str = "r",
         encoding: Optional[str] = None,
     ) -> ContextManager:
-        logging.info(f"Loading {file_path}...")
+        logging.debug(f"Loading {file_path}...")
         return dvc.api.open(
             path=f"{file_path}",
             repo=repo,
