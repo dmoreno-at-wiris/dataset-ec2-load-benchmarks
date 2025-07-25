@@ -5,6 +5,7 @@ import gc
 
 from torch.utils.data import DataLoader
 from torch import cuda
+
 # import webdataset as wds
 # from datasets import load_dataset
 from memory_profiler import profile
@@ -20,9 +21,9 @@ from src.timer import Timer
 
 logging.basicConfig(level=logging.INFO)
 
+
 @profile
 def main():
-
     benchmarks_log_table = table.Table(title="Mean (mock) training time")
     benchmarks_log_table.add_column("Benchmark", justify="left")
     benchmarks_log_table.add_column("Dataset source", justify="center")
@@ -68,7 +69,9 @@ def main():
     benchmark_name = "Local Parquet (data/train_21082019.parquet)"
     print(markdown.Markdown(f"# {benchmark_name}"))
     print(markdown.Markdown("**Dataset instantiation time**:"))
-    t_local_df = Timer(name="Loading Parquet data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_local_df = Timer(
+        name="Loading Parquet data time", text="Elapsed time: {:0.4f} seconds\n"
+    )
     t_local_df.start()
     train_local_df_dataset = LocalParquetDataset(
         dataset_file_path=Path("data/train_21082019.parquet"),
@@ -168,7 +171,9 @@ def main():
     benchmark_name = "S3 Parquet"
     print(markdown.Markdown(f"# {benchmark_name}"))
     print(markdown.Markdown("**Dataset instantiation time**:"))
-    t_s3_df = Timer(name="Loading Parquet data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_s3_df = Timer(
+        name="Loading Parquet data time", text="Elapsed time: {:0.4f} seconds\n"
+    )
     t_s3_df.start()
     train_s3_df_dataset = S3ParquetDataset(
         s3_bucket_name="wiris-ml-datasets",
@@ -244,7 +249,9 @@ def main():
     benchmark_name = "S3 Parquet sharded zstd22"
     print(markdown.Markdown(f"# {benchmark_name}"))
     print(markdown.Markdown("**Dataset instantiation time**:"))
-    t_s3_sharded_zstd22_df = Timer(name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_s3_sharded_zstd22_df = Timer(
+        name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n"
+    )
     t_s3_sharded_zstd22_df.start()
     train_s3_sharded_zstd22_df_dataset = S3ParquetDataset(
         s3_bucket_name="wiris-ml-datasets",
@@ -287,7 +294,9 @@ def main():
     benchmark_name = "S3 Parquet sharded zstd10"
     print(markdown.Markdown(f"# {benchmark_name}"))
     print(markdown.Markdown("**Dataset instantiation time**:"))
-    t_s3_sharded_zstd10_df = Timer(name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_s3_sharded_zstd10_df = Timer(
+        name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n"
+    )
     t_s3_sharded_zstd10_df.start()
     train_s3_sharded_zstd10_df_dataset = S3ParquetDataset(
         s3_bucket_name="wiris-ml-datasets",
@@ -330,7 +339,9 @@ def main():
     benchmark_name = "S3 Parquet sharded zstdNone"
     print(markdown.Markdown(f"# {benchmark_name}"))
     print(markdown.Markdown("**Dataset instantiation time**:"))
-    t_s3_sharded_zstdNone_df = Timer(name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_s3_sharded_zstdNone_df = Timer(
+        name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n"
+    )
     t_s3_sharded_zstdNone_df.start()
     train_s3_sharded_zstdNone_df_dataset = S3ParquetDataset(
         s3_bucket_name="wiris-ml-datasets",
