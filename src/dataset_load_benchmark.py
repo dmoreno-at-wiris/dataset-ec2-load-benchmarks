@@ -8,6 +8,7 @@ from enum import Enum
 
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+
 # TODO: Import rich print
 from rich import print, markdown, table, align
 
@@ -20,7 +21,9 @@ class DatasetSource(Enum):
     OTHER = -1
 
 
-class DatasetMode(Enum):        # TODO: Consider moving towards a more descriptive enums. E.g.: PARQUET, PARQUET_COMPRESSED, ...
+class DatasetMode(
+    Enum
+):  # TODO: Consider moving towards a more descriptive enums. E.g.: PARQUET, PARQUET_COMPRESSED, ...
     FILES = 0
     DF = 1
     COMPRESSED = 2
@@ -48,7 +51,11 @@ class DatasetLoadBenchmark:
         # print(f"First lable: {train_labels[0]}")
 
     def train_mock(self) -> float:
-        t = Timer(name=f"{self.load_from}-{self.load_as}-train-mock", text="**One epoch training time**:\n{:0.4f} seconds\n", logger=(lambda text : print(align.Align.center(markdown.Markdown(text)))))
+        t = Timer(
+            name=f"{self.load_from}-{self.load_as}-train-mock",
+            text="**One epoch training time**:\n{:0.4f} seconds\n",
+            logger=(lambda text: print(align.Align.center(markdown.Markdown(text)))),
+        )
         sum_t = 0
         for epoch in range(self.train_epochs):
             t.start()
