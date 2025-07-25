@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11.9"
 dependencies = [
     "boto3>=1.38.40",
+    "orjson>=3.10.18",
     "polars>=1.30.0",
     "pytest>=8.4.0",
     "s3fs>=0.4.2",

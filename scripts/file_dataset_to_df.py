@@ -1,11 +1,11 @@
 from typing import List
 import logging
 from pathlib import Path
-import json
 
 # from s3fs import S3FileSystem
 import polars as pl
 from tqdm import tqdm
+import orjson as json
 
 from src.file_loader import FSFileLoader
 from src.timer import Timer
