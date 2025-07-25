@@ -6,10 +6,12 @@ readme = "README.md"
 requires-python = ">=3.11.9"
 dependencies = [
     "boto3>=1.38.40",
+    "datasets>=4.0.0",
     "dvc>=3.60.1",
     "memory-profiler>=0.61.0",
     "orjson>=3.10.18",
     "polars>=1.30.0",
+    "pyarrow>=21.0.0",
     "pytest>=8.4.0",
     "rich>=14.0.0",
     "s3fs>=0.4.2",
