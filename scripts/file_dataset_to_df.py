@@ -90,7 +90,10 @@ def strokes_dataset_to_df(
             pl.col("sample_path")
             .str.replace("^./", f"{dataset_file_path.parent}/")
             .map_elements(
-                load_sample, return_dtype=pl.List(pl.List(pl.List(pl.Float64)))
+                load_sample,
+                return_dtype=pl.List(pl.List(pl.List(pl.Float64))),
+                # NOTE: Threading strategy takes much longer
+                # strategy="threading",
             )
             # .map_elements(load_sample, return_dtype=pl.List)
             # .map_elements(load_sample, return_dtype=pl.List(pl.Float64))
@@ -104,7 +107,6 @@ def strokes_dataset_to_df(
     train_df.write_parquet(
         Path(f"data/{dataset_parquet_path.name}"),
         compression="zstd",
-        # compression_level=22,
         compression_level=22,
     )
     logging.info(f"Writing s3://{s3_bucket_name}/{dataset_parquet_path}")
