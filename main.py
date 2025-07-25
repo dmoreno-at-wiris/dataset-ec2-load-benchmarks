@@ -6,6 +6,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 from torch import cuda
 # import webdataset as wds
+from memory_profiler import profile
 from rich import print, table, markdown
 
 # from src.s3_files_dataset.s3_fs_dataset import S3FSDataset
@@ -19,6 +20,7 @@ from src.timer import Timer
 # logging.basicConfig(level=logging.DEBUG)
 
 
+@profile
 def main():
     print("Hello from dataset-ec2-load-benchmarks!")
     benchmarks_log_table = table.Table(title="Mean (mock) training time")
@@ -57,6 +59,11 @@ def main():
 
     local_fs_benchmark.measure()
 
+    del local_fs_benchmark
+    del train_local_dataloader
+    del train_local_dataset
+    gc.collect()
+
     # NOTE: Local Parquet
     benchmark_name = "Local Parquet (data/train_21082019.parquet)"
     print(markdown.Markdown(f"# {benchmark_name}"))
@@ -89,6 +96,12 @@ def main():
     )
 
     local_df_benchmark.measure()
+
+    del local_df_benchmark
+    del train_local_df_dataloader
+    del train_local_df_dataset
+    gc.collect()
+
     # NOTE: S3 FS
     # train_s3_dataset = S3FSDataset(
     #     s3_bucket_name="wiris-ml-datasets",
@@ -115,6 +128,8 @@ def main():
     # )
 
     # s3_fs_benchmark.measure()
+
+    # TODO: Remove variable with del to avoid memory usage
 
     # NOTE: S3 Parquet
     benchmark_name = "S3 Parquet"
@@ -153,6 +168,12 @@ def main():
     )
 
     s3_df_benchmark.measure()
+
+    del s3_df_benchmark
+    del train_s3_df_dataloader
+    del train_s3_df_dataset
+    gc.collect()
+
     # t_s3_df.start()
     # train_s3_df_dataset = S3ParquetDataset(
     #     s3_bucket_name="wiris-ml-datasets",
@@ -221,6 +242,11 @@ def main():
 
     s3_sharded_zstd22_df_benchmark.measure()
 
+    del s3_sharded_zstd22_df_benchmark
+    del train_s3_sharded_zstd22_df_dataloader
+    del train_s3_sharded_zstd22_df_dataset
+    gc.collect()
+
     # NOTE: S3 Parquet sharded zstd10
     benchmark_name = "S3 Parquet sharded zstd10"
     print(markdown.Markdown(f"# {benchmark_name}"))
@@ -258,6 +284,12 @@ def main():
     )
 
     s3_sharded_zstd10_df_benchmark.measure()
+
+    del s3_sharded_zstd10_df_benchmark
+    del train_s3_sharded_zstd10_df_dataloader
+    del train_s3_sharded_zstd10_df_dataset
+    gc.collect()
+
     # NOTE: S3 Parquet sharded zstdNone
     benchmark_name = "S3 Parquet sharded zstdNone"
     print(markdown.Markdown(f"# {benchmark_name}"))
@@ -295,6 +327,10 @@ def main():
     )
 
     s3_sharded_zstdNone_df_benchmark.measure()
+    del s3_sharded_zstdNone_df_benchmark
+    del train_s3_sharded_zstdNone_df_dataloader
+    del train_s3_sharded_zstdNone_df_dataset
+    gc.collect()
     # TODO: WebDataset NOTE: Pytorch does not support WebDataset anymore
     # Ref:
     # https://docs.pytorch.org/data/0.7/generated/torchdata.datapipes.iter.WebDataset.html
@@ -334,6 +370,8 @@ def main():
     # )
 
     # s3_wds_benchmark.measure()
+
+    # TODO: Remove variable with del to avoid memory usage
 
 
 if __name__ == "__main__":
