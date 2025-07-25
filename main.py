@@ -1,0 +1,172 @@
+# from typing import List, cast
+# import logging
+from pathlib import Path
+
+from torch.utils.data import DataLoader
+from torch import cuda
+# import webdataset as wds
+
+# from src.s3_files_dataset.s3_fs_dataset import S3FSDataset
+from src.local_dataset.local_fs_dataset import LocalFSDataset
+from src.local_dataset.local_df_dataset import LocalParquetDataset
+
+# from src.s3_parquet_dataset.s3_df_dataset import S3ParquetDataset
+from src.dataset_load_benchmark import DatasetLoadBenchmark, DatasetSource, DatasetMode
+from src.timer import Timer
+
+# logging.basicConfig(level=logging.DEBUG)
+
+
+def main():
+    print("Hello from dataset-ec2-load-benchmarks!")
+
+    # NOTE: Local FS
+    train_local_dataset = LocalFSDataset(
+        datasets_path=Path("/home/daniel/ML/data"),
+        data_annotation_file_path=Path(
+            "strokes/wiris-math-online-incomplete/train_21082019.txt"
+        ),
+    )
+
+    train_local_dataloader = DataLoader(
+        train_local_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+    )
+
+    local_fs_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.DISK,
+        load_as=DatasetMode.FILES,
+        dataloader=train_local_dataloader,
+        iterations_number=1,
+    )
+
+    local_fs_benchmark.measure()
+
+    # NOTE: S3 FS
+    # train_s3_dataset = S3FSDataset(
+    #     s3_bucket_name="wiris-ml-datasets",
+    #     data_annotation_file_path=Path(
+    #         "files/strokes/wiris-math-online-incomplete/train_21082019.txt"
+    #     ),
+    # )
+
+    # train_s3_dataloader = DataLoader(
+    #     train_s3_dataset,
+    #     batch_size=32,
+    #     num_workers=8,
+    #     prefetch_factor=4,
+    #     pin_memory=cuda.is_available(),
+    # )
+
+    # s3_fs_benchmark = DatasetLoadBenchmark(
+    #     load_from=DatasetSource.S3,
+    #     load_as=DatasetMode.FILES,
+    #     dataloader=train_s3_dataloader,
+    #     iterations_number=1,
+    # )
+
+    # s3_fs_benchmark.measure()
+
+    # NOTE: S3 Parquet
+    # t_s3_df = Timer(name="Loading Parquet data time")
+    # t_s3_df.start()
+    # train_s3_df_dataset = S3ParquetDataset(
+    #     s3_bucket_name="wiris-ml-datasets",
+    #     dataset_file_path=Path(
+    #         "df/strokes/wiris-math-online-incomplete/train_21082019.parquet"
+    #     ),
+    # )
+    # t_s3_df.stop()
+
+    # t_s3_df.start()
+    # train_s3_df_dataloader = DataLoader(
+    #     train_s3_df_dataset,
+    #     batch_size=32,
+    #     num_workers=8,
+    #     prefetch_factor=4,
+    #     pin_memory=cuda.is_available(),
+    # )
+    # t_s3_df.stop()
+
+    # s3_df_benchmark = DatasetLoadBenchmark(
+    #     load_from=DatasetSource.S3,
+    #     load_as=DatasetMode.DF,
+    #     dataloader=train_s3_df_dataloader,
+    #     iterations_number=1,
+    #     train_epochs=2,
+    # )
+
+    # s3_df_benchmark.measure()
+
+    # NOTE: Local Parquet
+
+    t_local_df = Timer(name="Loading Parquet data time")
+    t_local_df.start()
+    train_local_df_dataset = LocalParquetDataset(
+        dataset_file_path=Path("data/train_21082019.parquet"),
+    )
+    t_local_df.stop()
+
+    t_local_df.start()
+    train_local_df_dataloader = DataLoader(
+        train_local_df_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+    )
+    t_local_df.stop()
+
+    local_df_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.DISK,
+        load_as=DatasetMode.DF,
+        dataloader=train_local_df_dataloader,
+        iterations_number=1,
+        train_epochs=2,
+    )
+
+    local_df_benchmark.measure()
+
+    # TODO: WebDataset NOTE: Pytorch does not support WebDataset anymore
+    # Ref:
+    # https://docs.pytorch.org/data/0.7/generated/torchdata.datapipes.iter.WebDataset.html
+    # t_s3_wds = Timer(name="Loading WebDataset time")
+    # t_s3_wds.start()
+    # # NOTE: The following code is not directly supported
+    # # train_s3_wds_dataset = wds.WebDataset(
+    # #     "s3://wiris-ml-datasets/wds/strokes/wiris-math-online-incomplete/train_21082019_part{000000..000039}.tar"
+    # # )
+    # # train_s3_wds_dataset = wds.WebDataset(
+    # #     "pipe:aws s3 sync s3://wiris-ml-datasets/wds/strokes/wiris-math-online-incomplete/train_21082019_part{000000..000039}.tar ."
+    # # )
+    # train_s3_wds_dataset = wds.WebDataset(
+    #     "pipe:aws s3api get-object --bucket wiris-ml-datasets --key wds/strokes/wiris-math-online-incomplete/train_21082019_part{000000..000039}.tar out | cat out"
+    # )
+    # t_s3_wds.stop()
+
+    # t_s3_wds.start()
+    # train_s3_wds_dataloader = DataLoader(
+    #     train_s3_wds_dataset,
+    #     batch_size=32,
+    #     num_workers=8,
+    #     prefetch_factor=4,
+    #     pin_memory=cuda.is_available(),
+    # )
+    # t_s3_wds.stop()
+
+    # s3_wds_benchmark = DatasetLoadBenchmark(
+    #     load_from=DatasetSource.S3,
+    #     load_as=DatasetMode.DF,
+    #     dataloader=train_s3_wds_dataloader,
+    #     iterations_number=1,
+    #     train_epochs=2,
+    # )
+
+    # s3_wds_benchmark.measure()
+
+
+if __name__ == "__main__":
+    main()
