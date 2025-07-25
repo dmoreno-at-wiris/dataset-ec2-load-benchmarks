@@ -27,7 +27,7 @@ def load_data_annotation(
             mode="r",
             encoding="utf-8",
         ) as f:
-            for line in tqdm(f):
+            for i, line in enumerate(tqdm(f)):
                 path, label = f"{line}".split(data_annotation_separator, 1)
 
                 paths.append(path)
@@ -100,7 +100,7 @@ def strokes_dataset_to_df(
     print(train_df.head())
     print(train_df.collect_schema().names())
 
-    logging.info(f"data/{dataset_parquet_path}")
+    # logging.debug(f"data/{dataset_parquet_path}")
     train_df.write_parquet(
         Path(f"data/{dataset_parquet_path.name}"),
         compression="zstd",
