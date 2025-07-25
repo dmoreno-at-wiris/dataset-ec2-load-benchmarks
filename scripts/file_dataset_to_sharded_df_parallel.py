@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import logging
 from pathlib import Path
 import multiprocessing
@@ -72,8 +72,8 @@ def strokes_data_annotation_to_df(
     dataset_file_path: Path,
     dataset_parquet_path: Path,
     s3_bucket_name: str,
-    compression: str = "zstd",
-    compression_level: int = 22,
+    compression: pl.ParquetCompression = "zstd",
+    compression_level: Optional[int] = None,
 ):
     train_df = (
         pl.DataFrame(items)
@@ -127,8 +127,8 @@ def mproc_strokes_dataset_to_sharded_df(
     dataset_parquet_path: Path,
     s3_bucket_name: str,
     num_of_shards: int = multiprocessing.cpu_count(),
-    compression: str = "zstd",
-    compression_level: int = 22,
+    compression: pl.ParquetCompression = "zstd",
+    compression_level: Optional[int] = None,
 ):
     items = load_data_annotation(dataset_file_path, FSFileLoader())
     num_of_items = len(items[0])
@@ -179,5 +179,5 @@ if __name__ == "__main__":
         s3_bucket_name="wiris-ml-datasets",
         num_of_shards=5,
         compression="zstd",
-        compression_level=None,
+        compression_level=None,  # NOTE: 22 is maximal compression
     )
