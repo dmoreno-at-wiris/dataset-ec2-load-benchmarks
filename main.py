@@ -55,6 +55,38 @@ def benchmark(
     gc.collect()
 
 
+def benchmark(
+    benchmark_name: str,
+    benchmarks_log_table: table.Table,
+    dataset: UbiquitousDataset,
+    load_from: DatasetSource,
+    load_as: DatasetMode,
+):
+    train_local_dataloader = DataLoader(
+        dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+    )
+
+    local_fs_benchmark = DatasetLoadBenchmark(
+        load_from=load_from,
+        load_as=load_as,
+        dataloader=train_local_dataloader,
+        log_table=benchmarks_log_table,
+        benchmark_name=benchmark_name,
+        iterations_number=1,
+    )
+
+    local_fs_benchmark.measure()
+
+    del local_fs_benchmark
+    del train_local_dataloader
+    del dataset
+    gc.collect()
+
+
 @profile
 def main():
     benchmarks_log_table = table.Table(title="Mean (mock) training time")
