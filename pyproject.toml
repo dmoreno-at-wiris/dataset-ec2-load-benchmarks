@@ -8,6 +8,7 @@ dependencies = [
     "boto3>=1.38.40",
     "polars>=1.30.0",
     "pytest>=8.4.0",
+    "rich>=14.0.0",
     "s3fs>=0.4.2",
     "torch>=2.7.1",
     "torchaudio>=2.7.1",

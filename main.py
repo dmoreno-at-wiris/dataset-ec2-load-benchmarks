@@ -1,10 +1,12 @@
 # from typing import List, cast
 # import logging
+import logging
 from pathlib import Path
 
 from torch.utils.data import DataLoader
 from torch import cuda
 # import webdataset as wds
+from rich import print, table, markdown
 
 # from src.s3_files_dataset.s3_fs_dataset import S3FSDataset
 from src.local_dataset.local_fs_dataset import LocalFSDataset
@@ -19,8 +21,16 @@ from src.timer import Timer
 
 def main():
     print("Hello from dataset-ec2-load-benchmarks!")
+    benchmarks_log_table = table.Table(title="Mean (mock) training time")
+    benchmarks_log_table.add_column("Benchmark", justify="left")
+    benchmarks_log_table.add_column("Dataset source", justify="center")
+    benchmarks_log_table.add_column("Dataset format", justify="center")
+    benchmarks_log_table.add_column("Mean time (s)", justify="right")
 
     # NOTE: Local FS
+    benchmark_name = "Local FS"
+    # print(align.Align.center("\n[yellow underline bold]Local FS"))
+    print(markdown.Markdown(f"# {benchmark_name}"))
     train_local_dataset = LocalFSDataset(
         datasets_path=Path("/home/daniel/ML/data"),
         data_annotation_file_path=Path(
@@ -40,11 +50,45 @@ def main():
         load_from=DatasetSource.DISK,
         load_as=DatasetMode.FILES,
         dataloader=train_local_dataloader,
+        log_table=benchmarks_log_table,
+        benchmark_name=benchmark_name,
         iterations_number=1,
     )
 
     local_fs_benchmark.measure()
 
+    # NOTE: Local Parquet
+    benchmark_name = "Local Parquet (data/train_21082019.parquet)"
+    print(markdown.Markdown(f"# {benchmark_name}"))
+    print(markdown.Markdown("**Dataset instantiation time**:"))
+    t_local_df = Timer(name="Loading Parquet data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_local_df.start()
+    train_local_df_dataset = LocalParquetDataset(
+        dataset_file_path=Path("data/train_21082019.parquet"),
+    )
+    t_local_df.stop()
+    print(markdown.Markdown("**Dataload instantiation time**:"))
+    t_local_df.start()
+    train_local_df_dataloader = DataLoader(
+        train_local_df_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+    )
+    t_local_df.stop()
+
+    local_df_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.DISK,
+        load_as=DatasetMode.DF,
+        dataloader=train_local_df_dataloader,
+        log_table=benchmarks_log_table,
+        benchmark_name=benchmark_name,
+        iterations_number=1,
+        train_epochs=2,
+    )
+
+    local_df_benchmark.measure()
     # NOTE: S3 FS
     # train_s3_dataset = S3FSDataset(
     #     s3_bucket_name="wiris-ml-datasets",
@@ -65,13 +109,50 @@ def main():
     #     load_from=DatasetSource.S3,
     #     load_as=DatasetMode.FILES,
     #     dataloader=train_s3_dataloader,
+    #     log_table=benchmarks_log_table,
+    #     benchmark_name=benchmark_name,
     #     iterations_number=1,
     # )
 
     # s3_fs_benchmark.measure()
 
     # NOTE: S3 Parquet
-    # t_s3_df = Timer(name="Loading Parquet data time")
+    benchmark_name = "S3 Parquet"
+    print(markdown.Markdown(f"# {benchmark_name}"))
+    print(markdown.Markdown("**Dataset instantiation time**:"))
+    t_s3_df = Timer(name="Loading Parquet data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_s3_df.start()
+    train_s3_df_dataset = S3ParquetDataset(
+        s3_bucket_name="wiris-ml-datasets",
+        dataset_file_path=Path(
+            "df/strokes/wiris-math-online-incomplete/train_21082019.parquet"
+        ),
+    )
+    t_s3_df.stop()
+
+    print(markdown.Markdown("**Dataload instantiation time**:"))
+    t_s3_df.start()
+    train_s3_df_dataloader = DataLoader(
+        train_s3_df_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+        # shuffle=True,
+    )
+    t_s3_df.stop()
+
+    s3_df_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.S3,
+        load_as=DatasetMode.DF,
+        dataloader=train_s3_df_dataloader,
+        log_table=benchmarks_log_table,
+        benchmark_name=benchmark_name,
+        iterations_number=1,
+        train_epochs=2,
+    )
+
+    s3_df_benchmark.measure()
     # t_s3_df.start()
     # train_s3_df_dataset = S3ParquetDataset(
     #     s3_bucket_name="wiris-ml-datasets",
@@ -101,35 +182,119 @@ def main():
 
     # s3_df_benchmark.measure()
 
-    # NOTE: Local Parquet
 
-    t_local_df = Timer(name="Loading Parquet data time")
-    t_local_df.start()
-    train_local_df_dataset = LocalParquetDataset(
-        dataset_file_path=Path("data/train_21082019.parquet"),
+    # NOTE: S3 Parquet sharded zstd22
+    benchmark_name = "S3 Parquet sharded zstd22"
+    print(markdown.Markdown(f"# {benchmark_name}"))
+    print(markdown.Markdown("**Dataset instantiation time**:"))
+    t_s3_sharded_zstd22_df = Timer(name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_s3_sharded_zstd22_df.start()
+    train_s3_sharded_zstd22_df_dataset = S3ParquetDataset(
+        s3_bucket_name="wiris-ml-datasets",
+        dataset_file_path=Path(
+            "df/strokes/wiris-math-online-incomplete/train_21082019.*.parquet"
+        ),
     )
-    t_local_df.stop()
+    t_s3_sharded_zstd22_df.stop()
 
-    t_local_df.start()
-    train_local_df_dataloader = DataLoader(
-        train_local_df_dataset,
+    print(markdown.Markdown("**Dataload instantiation time**:"))
+    t_s3_sharded_zstd22_df.start()
+    train_s3_sharded_zstd22_df_dataloader = DataLoader(
+        train_s3_sharded_zstd22_df_dataset,
         batch_size=32,
         num_workers=8,
         prefetch_factor=4,
         pin_memory=cuda.is_available(),
+        # shuffle=True,
     )
-    t_local_df.stop()
+    t_s3_sharded_zstd22_df.stop()
 
-    local_df_benchmark = DatasetLoadBenchmark(
-        load_from=DatasetSource.DISK,
+    s3_sharded_zstd22_df_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.S3,
         load_as=DatasetMode.DF,
-        dataloader=train_local_df_dataloader,
+        dataloader=train_s3_sharded_zstd22_df_dataloader,
+        log_table=benchmarks_log_table,
+        benchmark_name=benchmark_name,
         iterations_number=1,
         train_epochs=2,
     )
 
-    local_df_benchmark.measure()
+    s3_sharded_zstd22_df_benchmark.measure()
 
+    # NOTE: S3 Parquet sharded zstd10
+    benchmark_name = "S3 Parquet sharded zstd10"
+    print(markdown.Markdown(f"# {benchmark_name}"))
+    print(markdown.Markdown("**Dataset instantiation time**:"))
+    t_s3_sharded_zstd10_df = Timer(name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_s3_sharded_zstd10_df.start()
+    train_s3_sharded_zstd10_df_dataset = S3ParquetDataset(
+        s3_bucket_name="wiris-ml-datasets",
+        dataset_file_path=Path(
+            "df/strokes/wiris-math-online-incomplete/zstd-10/train_21082019.*.parquet"
+        ),
+    )
+    t_s3_sharded_zstd10_df.stop()
+
+    print(markdown.Markdown("**Dataload instantiation time**:"))
+    t_s3_sharded_zstd10_df.start()
+    train_s3_sharded_zstd10_df_dataloader = DataLoader(
+        train_s3_sharded_zstd10_df_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+        # shuffle=True,
+    )
+    t_s3_sharded_zstd10_df.stop()
+
+    s3_sharded_zstd10_df_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.S3,
+        load_as=DatasetMode.DF,
+        dataloader=train_s3_sharded_zstd10_df_dataloader,
+        log_table=benchmarks_log_table,
+        benchmark_name=benchmark_name,
+        iterations_number=1,
+        train_epochs=2,
+    )
+
+    s3_sharded_zstd10_df_benchmark.measure()
+    # NOTE: S3 Parquet sharded zstdNone
+    benchmark_name = "S3 Parquet sharded zstdNone"
+    print(markdown.Markdown(f"# {benchmark_name}"))
+    print(markdown.Markdown("**Dataset instantiation time**:"))
+    t_s3_sharded_zstdNone_df = Timer(name="Loading Parquet sharded data time", text="Elapsed time: {:0.4f} seconds\n")
+    t_s3_sharded_zstdNone_df.start()
+    train_s3_sharded_zstdNone_df_dataset = S3ParquetDataset(
+        s3_bucket_name="wiris-ml-datasets",
+        dataset_file_path=Path(
+            "df/strokes/wiris-math-online-incomplete/zstd-none/train_21082019.*.parquet"
+        ),
+    )
+    t_s3_sharded_zstdNone_df.stop()
+
+    print(markdown.Markdown("**Dataload instantiation time**:"))
+    t_s3_sharded_zstdNone_df.start()
+    train_s3_sharded_zstdNone_df_dataloader = DataLoader(
+        train_s3_sharded_zstdNone_df_dataset,
+        batch_size=32,
+        num_workers=8,
+        prefetch_factor=4,
+        pin_memory=cuda.is_available(),
+        # shuffle=True,
+    )
+    t_s3_sharded_zstdNone_df.stop()
+
+    s3_sharded_zstdNone_df_benchmark = DatasetLoadBenchmark(
+        load_from=DatasetSource.S3,
+        load_as=DatasetMode.DF,
+        dataloader=train_s3_sharded_zstdNone_df_dataloader,
+        log_table=benchmarks_log_table,
+        benchmark_name=benchmark_name,
+        iterations_number=1,
+        train_epochs=2,
+    )
+
+    s3_sharded_zstdNone_df_benchmark.measure()
     # TODO: WebDataset NOTE: Pytorch does not support WebDataset anymore
     # Ref:
     # https://docs.pytorch.org/data/0.7/generated/torchdata.datapipes.iter.WebDataset.html
@@ -147,6 +312,7 @@ def main():
     # )
     # t_s3_wds.stop()
 
+    # print(markdown.Markdown("**Dataload instantiation time**:"))
     # t_s3_wds.start()
     # train_s3_wds_dataloader = DataLoader(
     #     train_s3_wds_dataset,
@@ -161,6 +327,8 @@ def main():
     #     load_from=DatasetSource.S3,
     #     load_as=DatasetMode.DF,
     #     dataloader=train_s3_wds_dataloader,
+    #     log_table=benchmarks_log_table,
+    #     benchmark_name=benchmark_name,
     #     iterations_number=1,
     #     train_epochs=2,
     # )
