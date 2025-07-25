@@ -88,5 +88,30 @@ class S3ParquetLoader(fileLoader):
             f"s3://{self.s3_bucket_name}/{file_path}",
             schema=schema,
             # ignore_errors = True,
+            # TODO: Consider proper sharding config
+            # glob=True,
+            # rechunk=True,
+            storage_options={"aws_region": aws_region},
+        )
+
+
+@dataclass
+class S3ParquetPLArrowLoader(fileLoader):
+    s3_bucket_name: str
+
+    def load(
+        self,
+        file_path: Path,
+        schema: Optional[Dict] = None,
+        aws_region: str = "eu-central-1",  # TODO: Consider moving the region as part of the Object definition instead of being a class parameter
+    ) -> pl.LazyFrame:
+        logging.debug(f"Loading {file_path}...")
+        return pl.scan_pyarrow_dataset(
+            f"s3://{self.s3_bucket_name}/{file_path}",
+            schema=schema,
+            # ignore_errors = True,
+            # TODO: Consider proper sharding config
+            # glob=True,
+            # rechunk=True,
             storage_options={"aws_region": aws_region},
         )
