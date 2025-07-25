@@ -105,6 +105,9 @@ class LocalParquetLoader(fileLoader):
             file_path,
             schema=schema,
             # ignore_errors = True,
+            # TODO: Consider proper sharding config
+            # glob=True,
+            # rechunk=True,
         )
 
 
@@ -123,6 +126,10 @@ class S3ParquetLoader(fileLoader):
             f"s3://{self.s3_bucket_name}/{file_path}",
             schema=schema,
             # ignore_errors = True,
+
+            # TODO: Consider proper sharding config
+            # glob=True,
+            # rechunk=True,
             storage_options={"aws_region": aws_region},
         )
 
