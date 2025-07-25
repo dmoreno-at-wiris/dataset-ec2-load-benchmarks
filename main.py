@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from torch import cuda
 
 # import webdataset as wds
+import gc
 from memory_profiler import profile
 from rich import print, table, markdown
 
