@@ -44,15 +44,16 @@ def load_sample(
 ) -> List[List[List[float]]]:
     # logging.debug(f"Sample path to load: {self.s3_bucket_name}{sample_path}")
 
+    sample = []
     try:
         with file_loader.load(
             Path(sample_path),
             mode="r",
         ) as f:
-            sample = f.read()
-            if sample:
-                return json.loads(sample)
-            return []
+            sample_file = f.read()
+            if sample_file:
+                sample = json.loads(sample_file)
+        return sample
     except Exception as e:
         logging.error(f"Error loading {sample_path}")
         logging.error(e)
