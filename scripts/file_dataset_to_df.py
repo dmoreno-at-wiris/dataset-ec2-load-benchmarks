@@ -106,14 +106,12 @@ def strokes_dataset_to_df(
         compression="zstd",
         # compression_level=22,
         compression_level=22,
-        partition_chunk_size_bytes=500000,
     )
     logging.info(f"Writing s3://{s3_bucket_name}/{dataset_parquet_path}")
     train_df.write_parquet(
         f"s3://{s3_bucket_name}/{dataset_parquet_path}",
         compression="zstd",
         compression_level=22,
-        partition_chunk_size_bytes=500000,
         storage_options={"aws_region": "eu-central-1"},
     )
 
@@ -123,7 +121,7 @@ strokes_dataset_to_df(
         "data/strokes/wiris-math-online-incomplete/train_21082019.txt"
     ),
     dataset_parquet_path=Path(
-        "df/strokes/wiris-math-online-incomplete/train_21082019.sharded.parquet"
+        "df/strokes/wiris-math-online-incomplete/train_21082019.parquet"
     ),
     s3_bucket_name="wiris-ml-datasets",
 )
