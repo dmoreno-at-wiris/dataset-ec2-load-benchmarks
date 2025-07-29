@@ -67,7 +67,7 @@ def strokes_dataset_to_webdataset(
 ):
     logging.info(f"{webdataset_path}")
 
-    with wds.TarWriter(str(webdataset_path)) as sink:
+    with wds.TarWriter(str(webdataset_path)) as sink:  # type: ignore
         logging.info(f"Writing {webdataset_path}")
         for sample in tqdm(webdataset_sample_generator(dataset_file_path)):
             sink.write(sample)
@@ -92,7 +92,7 @@ def strokes_dataset_to_sharded_webdataset(
 ):
     logging.info(f"{webdataset_path}")
 
-    with wds.ShardWriter(webdataset_path, maxcount=shard_size) as sink:
+    with wds.ShardWriter(webdataset_path, maxcount=shard_size) as sink:  # type: ignore
         logging.info(f"Writing {webdataset_path}")
         for sample in tqdm(webdataset_sample_generator(dataset_file_path)):
             sink.write(sample)

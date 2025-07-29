@@ -80,5 +80,5 @@ class DatasetLoadBenchmark:
             f"{mean_t}",
         )
         print(align.Align.center(self.log_table))
-        self.log_table = None
+        del self.log_table
         return mean_t
