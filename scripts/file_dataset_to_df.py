@@ -1,15 +1,16 @@
 from typing import List
 import logging
 from pathlib import Path
-import json
 
 # from s3fs import S3FileSystem
 import polars as pl
 from tqdm import tqdm
+import orjson as json
 
 from src.file_loader import FSFileLoader
+from src.timer import Timer
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 def load_data_annotation(
@@ -26,7 +27,7 @@ def load_data_annotation(
             mode="r",
             encoding="utf-8",
         ) as f:
-            for line in tqdm(f):
+            for i, line in enumerate(tqdm(f)):
                 path, label = f"{line}".split(data_annotation_separator, 1)
 
                 paths.append(path)
@@ -43,21 +44,23 @@ def load_sample(
 ) -> List[List[List[float]]]:
     # logging.debug(f"Sample path to load: {self.s3_bucket_name}{sample_path}")
 
+    sample = []
     try:
         with file_loader.load(
             Path(sample_path),
             mode="r",
         ) as f:
-            sample = f.read()
-            if sample:
-                return json.loads(sample)
-            return []
+            sample_file = f.read()
+            if sample_file:
+                sample = json.loads(sample_file)
+        return sample
     except Exception as e:
         logging.error(f"Error loading {sample_path}")
         logging.error(e)
         raise e
 
 
+@Timer(name="Dataset transformation to polars df as parquet file")
 def strokes_dataset_to_df(
     dataset_file_path: Path, dataset_parquet_path: Path, s3_bucket_name: str
 ):
@@ -87,7 +90,10 @@ def strokes_dataset_to_df(
             pl.col("sample_path")
             .str.replace("^./", f"{dataset_file_path.parent}/")
             .map_elements(
-                load_sample, return_dtype=pl.List(pl.List(pl.List(pl.Float64)))
+                load_sample,
+                return_dtype=pl.List(pl.List(pl.List(pl.Float64))),
+                # NOTE: Threading strategy takes much longer
+                # strategy="threading",
             )
             # .map_elements(load_sample, return_dtype=pl.List)
             # .map_elements(load_sample, return_dtype=pl.List(pl.Float64))
@@ -97,7 +103,7 @@ def strokes_dataset_to_df(
     print(train_df.head())
     print(train_df.collect_schema().names())
 
-    logging.info(f"data/{dataset_parquet_path}")
+    # logging.debug(f"data/{dataset_parquet_path}")
     train_df.write_parquet(
         Path(f"data/{dataset_parquet_path.name}"),
         compression="zstd",
@@ -114,7 +120,7 @@ def strokes_dataset_to_df(
 
 strokes_dataset_to_df(
     dataset_file_path=Path(
-        "/home/daniel/ML/data/strokes/wiris-math-online-incomplete/train_21082019.txt"
+        "data/strokes/wiris-math-online-incomplete/train_21082019.txt"
     ),
     dataset_parquet_path=Path(
         "df/strokes/wiris-math-online-incomplete/train_21082019.parquet"
