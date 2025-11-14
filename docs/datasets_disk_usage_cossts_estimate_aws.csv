@@ -1,0 +1,18 @@
+﻿Resumen de la estimación
+Costo inicial,Costo mensual,Total 12 months cost,Divisa
+0.11,111.44,1337.39,USD
+,,* Incluye el costo inicial
+
+
+Estimación detallada
+Jerarquía de grupos,Región,Descripción,Servicio,Inicial,Mensual,First 12 months total,Divisa,Estado,Resumen de configuración
+My Estimate,Este de EE. UU. (Ohio),1 EBS per machine holding only the required training dataset,Amazon Elastic Block Store (EBS),0,6.9,82.80,USD,,"Cantidad de volúmenes (3), Duración media del volumen (336 horas al mes), Cantidad de almacenamiento por volumen (50 GB), Frecuencia de instantáneas (Sin almacenamiento de instantáneas)"
+My Estimate,Este de EE. UU. (Ohio),1 EBS per EC2 holding only ALL training dataset,Amazon Elastic Block Store (EBS),0,13.8,165.60,USD,,"Cantidad de volúmenes (3), Duración media del volumen (336 horas al mes), Cantidad de almacenamiento por volumen (100 GB), Frecuencia de instantáneas (Sin almacenamiento de instantáneas)"
+My Estimate,Este de EE. UU. (Ohio),1 EBS for all machines holding only the required training dataset,Amazon Elastic Block Store (EBS),0,2.3,27.60,USD,,"Cantidad de volúmenes (1), Duración media del volumen (336 horas al mes), Cantidad de almacenamiento por volumen (50 GB), Frecuencia de instantáneas (Sin almacenamiento de instantáneas), Cantidad de instantáneas que se van a restaurar (0)"
+My Estimate,Europa (Fráncfort),S3 containing all datasets and dvc,S3 Standard,0.113249,28.44,341.39,USD,,"Almacenamiento de S3 Estándar (1 TB por mes), Tamaño medio de objeto de S3 Standard (50 MB), Solicitudes PUT, COPY, POST y LIST a S3 Standard (400000), Solicitudes GET, SELECT y todas las demás desde S3 Estándar (2400000), Datos devueltos por S3 Select (200 GB por mes)"
+My Estimate,Europa (Fráncfort),S3 containing all datasets and dvc,Data Transfer,0,60,720.00,USD,,"DT Entrada: Internet (1 TB al mes), DT Salida: Todas las demás regiones (300 GB por mes), DT Salida: Internet (600 GB por mes)"
+
+
+
+Reconocimiento
+"* La Calculadora de precios de AWS proporciona únicamente una estimación de sus tarifas de AWS y no incluye los impuestos que puedan aplicarse. El valor real de sus tarifas depende de una serie de factores, entre los que se incluye su uso real de AWS."
