@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en" class="reveal-full-page reveal-print print-pdf"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<title>Dataset Load Benchmarks</title>
+<meta name="author" content="Daniel">
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="benchmark_results_4-7-25_presentation_files/reveal.css">
+
+<link rel="stylesheet" href="benchmark_results_4-7-25_presentation_files/night.css" id="theme">
+
+<link rel="stylesheet" href="custom-reveal.css">
+<link rel="stylesheet" href="benchmark_results_4-7-25_presentation_files/zenburn.css">
+<style type="text/css">.hljs-ln{border-collapse:collapse}.hljs-ln td{padding:0}.hljs-ln-n:before{content:attr(data-line-number)}</style><style type="text/css">@page{size:998px 728px; margin: 0px;}</style><style type="text/css">.reveal section>img, .reveal section>video, .reveal section>iframe{max-width: 960px; max-height:700px}</style></head>
+<body style="transition: transform 0.8s; --slide-width: 960px; --slide-height: 700px; width: 998px; height: 728px;" class="reveal-viewport" data-new-gr-c-s-check-loaded="8.931.0" data-gr-ext-installed="">
+<div class="reveal none center focused has-vertical-slides has-horizontal-slides ready" role="application" data-transition-speed="default" data-background-transition="fade" style="cursor: none;">
+<div class="slides">
+
+
+
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+
+
+
+
+
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+
+
+
+
+
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+
+</section>
+<section hidden="" aria-hidden="true" class="stack present" style="display: block;">
+
+</section>
+<div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="sec-title-slide" class="present" style="display: block; left: 19px; top: 169.5px; width: 960px;">
+<h2>Data ingestion architecture</h2><h3>4-7-25</h3><p>Dani - ML Team</p>
+</section><div class="slide-number slide-number-pdf">1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="table-of-contents-section" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 171.5px; width: 960px;">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#/slide-org4e6d8df">What is the task?</a></li>
+<li><a href="#/slide-org6ea4801">Considerations</a></li>
+<li><a href="#/slide-org02b5b57">The story</a></li>
+<li><a href="#/slide-org7c7aee9">Results - Benchmarks</a></li>
+<li><a href="#/slide-org57871d2">🧠 Brainstorming</a></li>
+</ul>
+</div>
+</div>
+</section><div class="slide-number slide-number-pdf">2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4e6d8df" class="present" style="display: block; left: 19px; top: 107.5px; width: 960px;">
+<h2 id="org4e6d8df">What is the task?</h2>
+<p>
+📝
+</p>
+
+<p>
+Build the data reading compute part for a Data Ingestion Pipeline.
+</p>
+
+<p>
+In other words:
+</p>
+
+<p>
+Load training dataset stored in an S3 bucket to an EC2 machine ready for training.
+</p>
+</section><div class="slide-number slide-number-pdf">3</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org9cbd6c4" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 237.5px; width: 960px;">
+<h3 id="org9cbd6c4">📝 Why?</h3>
+<ul>
+<li class="fragment appear" data-fragment-index="0">EBS storage is not cheap for constant storage.</li>
+<li class="fragment appear" data-fragment-index="1">Standarization of our train pipelines to keep up with others</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">4</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org9cbd6c4" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 237.5px; width: 960px;">
+<h3 id="org9cbd6c4">📝 Why?</h3>
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">EBS storage is not cheap for constant storage.</li>
+<li class="fragment appear" data-fragment-index="1">Standarization of our train pipelines to keep up with others</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">4.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org9cbd6c4" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 237.5px; width: 960px;">
+<h3 id="org9cbd6c4">📝 Why?</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">EBS storage is not cheap for constant storage.</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Standarization of our train pipelines to keep up with others</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">4.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orga47908f" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 281px; width: 960px;">
+<h3 id="orga47908f">📝 ML Lifecycle</h3>
+
+<div id="orgcc42573" class="figure">
+<p><img src="ML-Lifecycle-Detail.jpg" alt="ML-Lifecycle-Detail.jpg" width="100%" height="40%">
+</p>
+</div>
+</section><div class="slide-number slide-number-pdf">5</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7140277" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 99.5px; width: 960px;">
+<h3 id="org7140277">📝 Data preparation environment</h3>
+<p>
+Requirements:
+</p>
+
+<ul class="r-stretch" style="font-size: 25px; height: 171px; width: 960px;">
+<li class="fragment appear" data-fragment-index="0">Dataset easy manipulation and modification (polars, pandas, …) for:
+<ul>
+<li>Data aggregation</li>
+<li>Data balancing</li>
+<li>Data cleaning/normalization/regularization</li>
+<li>Data labeling</li>
+
+</ul></li>
+<li class="fragment appear" data-fragment-index="1">Dataset proper storage (DVC, AWS tools, polars,)</li>
+<li class="fragment appear" data-fragment-index="2">Pipeline creation (DVC, Dagger, Airflow,)</li>
+<li class="fragment appear" data-fragment-index="3"><p>
+Dataset versioning (DVC,)
+</p>
+
+<aside class="notes">
+<ul>
+<li>IMPORTANT: Datasets should be shared between all ML team. Any improvements
+should be considered by all of us</li>
+<li>This could help us organizing our tasks, too</li>
+
+</ul>
+
+</aside></li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">6</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7140277" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 99.5px; width: 960px;">
+<h3 id="org7140277">📝 Data preparation environment</h3>
+<p>
+Requirements:
+</p>
+
+<ul class="r-stretch" style="font-size: 25px; height: 171px; width: 960px;">
+<li class="fragment appear visible current-fragment" data-fragment-index="0">Dataset easy manipulation and modification (polars, pandas, …) for:
+<ul>
+<li>Data aggregation</li>
+<li>Data balancing</li>
+<li>Data cleaning/normalization/regularization</li>
+<li>Data labeling</li>
+
+</ul></li>
+<li class="fragment appear" data-fragment-index="1">Dataset proper storage (DVC, AWS tools, polars,)</li>
+<li class="fragment appear" data-fragment-index="2">Pipeline creation (DVC, Dagger, Airflow,)</li>
+<li class="fragment appear" data-fragment-index="3"><p>
+Dataset versioning (DVC,)
+</p>
+
+<aside class="notes">
+<ul>
+<li>IMPORTANT: Datasets should be shared between all ML team. Any improvements
+should be considered by all of us</li>
+<li>This could help us organizing our tasks, too</li>
+
+</ul>
+
+</aside></li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">6.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7140277" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 99.5px; width: 960px;">
+<h3 id="org7140277">📝 Data preparation environment</h3>
+<p>
+Requirements:
+</p>
+
+<ul class="r-stretch" style="font-size: 25px; height: 171px; width: 960px;">
+<li class="fragment appear visible" data-fragment-index="0">Dataset easy manipulation and modification (polars, pandas, …) for:
+<ul>
+<li>Data aggregation</li>
+<li>Data balancing</li>
+<li>Data cleaning/normalization/regularization</li>
+<li>Data labeling</li>
+
+</ul></li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Dataset proper storage (DVC, AWS tools, polars,)</li>
+<li class="fragment appear" data-fragment-index="2">Pipeline creation (DVC, Dagger, Airflow,)</li>
+<li class="fragment appear" data-fragment-index="3"><p>
+Dataset versioning (DVC,)
+</p>
+
+<aside class="notes">
+<ul>
+<li>IMPORTANT: Datasets should be shared between all ML team. Any improvements
+should be considered by all of us</li>
+<li>This could help us organizing our tasks, too</li>
+
+</ul>
+
+</aside></li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">6.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7140277" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 99.5px; width: 960px;">
+<h3 id="org7140277">📝 Data preparation environment</h3>
+<p>
+Requirements:
+</p>
+
+<ul class="r-stretch" style="font-size: 25px; height: 171px; width: 960px;">
+<li class="fragment appear visible" data-fragment-index="0">Dataset easy manipulation and modification (polars, pandas, …) for:
+<ul>
+<li>Data aggregation</li>
+<li>Data balancing</li>
+<li>Data cleaning/normalization/regularization</li>
+<li>Data labeling</li>
+
+</ul></li>
+<li class="fragment appear visible" data-fragment-index="1">Dataset proper storage (DVC, AWS tools, polars,)</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="2">Pipeline creation (DVC, Dagger, Airflow,)</li>
+<li class="fragment appear" data-fragment-index="3"><p>
+Dataset versioning (DVC,)
+</p>
+
+<aside class="notes">
+<ul>
+<li>IMPORTANT: Datasets should be shared between all ML team. Any improvements
+should be considered by all of us</li>
+<li>This could help us organizing our tasks, too</li>
+
+</ul>
+
+</aside></li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">6.3</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7140277" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 99.5px; width: 960px;">
+<h3 id="org7140277">📝 Data preparation environment</h3>
+<p>
+Requirements:
+</p>
+
+<ul class="r-stretch" style="font-size: 25px; height: 171px; width: 960px;">
+<li class="fragment appear visible" data-fragment-index="0">Dataset easy manipulation and modification (polars, pandas, …) for:
+<ul>
+<li>Data aggregation</li>
+<li>Data balancing</li>
+<li>Data cleaning/normalization/regularization</li>
+<li>Data labeling</li>
+
+</ul></li>
+<li class="fragment appear visible" data-fragment-index="1">Dataset proper storage (DVC, AWS tools, polars,)</li>
+<li class="fragment appear visible" data-fragment-index="2">Pipeline creation (DVC, Dagger, Airflow,)</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="3"><p>
+Dataset versioning (DVC,)
+</p>
+
+<aside class="notes">
+<ul>
+<li>IMPORTANT: Datasets should be shared between all ML team. Any improvements
+should be considered by all of us</li>
+<li>This could help us organizing our tasks, too</li>
+
+</ul>
+
+</aside></li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">6.4</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07fc4ba" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 175.5px; width: 960px;">
+<h3 id="org07fc4ba">📝 Training infra</h3>
+<p>
+Requirements:
+</p>
+
+<ul>
+<li class="fragment appear" data-fragment-index="0">Experiment tracking (SageMaker, MLFlow)</li>
+<li class="fragment appear" data-fragment-index="1">Dataset versioning (DVC,)</li>
+<li class="fragment appear" data-fragment-index="2">Data ingestion (AWS storage tools, polars, …)</li>
+<li class="fragment appear" data-fragment-index="3">Training environment (uv, pytorch, …)</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">7</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07fc4ba" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 175.5px; width: 960px;">
+<h3 id="org07fc4ba">📝 Training infra</h3>
+<p>
+Requirements:
+</p>
+
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">Experiment tracking (SageMaker, MLFlow)</li>
+<li class="fragment appear" data-fragment-index="1">Dataset versioning (DVC,)</li>
+<li class="fragment appear" data-fragment-index="2">Data ingestion (AWS storage tools, polars, …)</li>
+<li class="fragment appear" data-fragment-index="3">Training environment (uv, pytorch, …)</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">7.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07fc4ba" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 175.5px; width: 960px;">
+<h3 id="org07fc4ba">📝 Training infra</h3>
+<p>
+Requirements:
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Experiment tracking (SageMaker, MLFlow)</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Dataset versioning (DVC,)</li>
+<li class="fragment appear" data-fragment-index="2">Data ingestion (AWS storage tools, polars, …)</li>
+<li class="fragment appear" data-fragment-index="3">Training environment (uv, pytorch, …)</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">7.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07fc4ba" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 175.5px; width: 960px;">
+<h3 id="org07fc4ba">📝 Training infra</h3>
+<p>
+Requirements:
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Experiment tracking (SageMaker, MLFlow)</li>
+<li class="fragment appear visible" data-fragment-index="1">Dataset versioning (DVC,)</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="2">Data ingestion (AWS storage tools, polars, …)</li>
+<li class="fragment appear" data-fragment-index="3">Training environment (uv, pytorch, …)</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">7.3</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07fc4ba" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 175.5px; width: 960px;">
+<h3 id="org07fc4ba">📝 Training infra</h3>
+<p>
+Requirements:
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Experiment tracking (SageMaker, MLFlow)</li>
+<li class="fragment appear visible" data-fragment-index="1">Dataset versioning (DVC,)</li>
+<li class="fragment appear visible" data-fragment-index="2">Data ingestion (AWS storage tools, polars, …)</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="3">Training environment (uv, pytorch, …)</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">7.4</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org6ea4801" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 267.5px; width: 960px;">
+<h2 id="org6ea4801">Considerations</h2>
+<p>
+🩻
+</p>
+</section><div class="slide-number slide-number-pdf">8</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7d91cf2" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 279.5px; width: 960px;">
+<h3 id="org7d91cf2">🩻 Training datasets processing best practices</h3>
+<div class="outline-text-3" id="text-org7d91cf2">
+</div>
+</section><div class="slide-number slide-number-pdf">9</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org8862f57" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 155px; width: 960px;">
+<h4 id="org8862f57">E.g.: <code>train_21082019.txt</code></h4>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col class="org-right">
+
+<col class="org-right">
+
+<col class="org-left">
+
+<col class="org-right">
+
+<col class="org-right">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right"># samples</th>
+<th scope="col" class="org-right">size (GB)</th>
+<th scope="col" class="org-left">mean sample size (KB)</th>
+<th scope="col" class="org-right">Usual training batch size (samples)</th>
+<th scope="col" class="org-right">Usual training batch size (MB)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">1180347</td>
+<td class="org-right">38.5</td>
+<td class="org-left">~32.61</td>
+<td class="org-right">32</td>
+<td class="org-right">1.04</td>
+</tr>
+</tbody>
+</table>
+
+<aside class="notes">
+<p>
+Calculations
+</p>
+
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="shell hljs language-shell" data-highlighted="yes">wc -l ML/dataset-ec2-load-benchmarks/data/strokes/wiris-math-online-incomplete/train_21082019.txt
+</code></pre>
+</div>
+
+
+<p>
+samples folders:
+</p>
+
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="shell hljs language-shell" data-highlighted="yes">grep -Eo '^[^[:space:]]+/' ML/dataset-ec2-load-benchmarks/data/strokes/wiris-math-online-incomplete/train_21082019.txt | sort -u
+</code></pre>
+</div>
+
+<p>
+mean sample size:
+</p>
+
+<p>
+du -h ~/ML/dataset-ec2-load-benchmarks/data/strokes/wiris-math-online-incomplete/samples-chemistry/
+</p>
+<ul>
+<li></li>
+
+</ul>
+<p>
+du -h ~/ML/dataset-ec2-load-benchmarks/data/strokes/wiris-math-online-incomplete/samples-editorfont/samples/
+</p>
+<ul>
+<li></li>
+
+</ul>
+<p>
+du -h ~/ML/dataset-ec2-load-benchmarks/data/strokes/wiris-math-online-incomplete/samples-generated-editor-stretchy-fixmatrix/
+</p>
+<ul>
+<li></li>
+
+</ul>
+<p>
+du -h ~/ML/dataset-ec2-load-benchmarks/data/strokes/wiris-math-online-incomplete/samples-mturk-split/
+</p>
+<ul>
+<li></li>
+
+</ul>
+<p>
+du -h ~/ML/dataset-ec2-load-benchmarks/data/strokes/wiris-math-online-incomplete/samples-multiline/
+</p>
+<ul>
+<li></li>
+
+</ul>
+<p>
+du -h 
+~/ML/dataset-ec2-load-benchmarks/data/strokes/wiris-math-online-
+incomplete/samples-split-and-replace-pr025-fixmatrix-fixmroot/
+</p>
+
+<p>
+/ 1180347
+</p>
+
+<p>
+= 46 MB + 497 MB + 5.7 GB + 6.9 GB + 343 MB + 25 GB / 1180347
+</p>
+
+<p>
+= 38.5 GB / 1180347 = 32.61 KB
+</p>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">10</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgdb77695" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 148px; width: 960px;">
+<h4 id="orgdb77695">Best practices for high performance datasets processing</h4>
+<ul>
+<li class="fragment appear" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Parallelization</li>
+<li class="fragment appear" data-fragment-index="4">High-Throughput Data Formats</li>
+<li class="fragment appear" data-fragment-index="5">Dedicated Data Processing Workers</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>Ref: <a href="https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469">https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469</a></li>
+
+</ul>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">11</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgdb77695" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 148px; width: 960px;">
+<h4 id="orgdb77695">Best practices for high performance datasets processing</h4>
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Parallelization</li>
+<li class="fragment appear" data-fragment-index="4">High-Throughput Data Formats</li>
+<li class="fragment appear" data-fragment-index="5">Dedicated Data Processing Workers</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>Ref: <a href="https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469">https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469</a></li>
+
+</ul>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">11.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgdb77695" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 148px; width: 960px;">
+<h4 id="orgdb77695">Best practices for high performance datasets processing</h4>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Parallelization</li>
+<li class="fragment appear" data-fragment-index="4">High-Throughput Data Formats</li>
+<li class="fragment appear" data-fragment-index="5">Dedicated Data Processing Workers</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>Ref: <a href="https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469">https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469</a></li>
+
+</ul>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">11.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgdb77695" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 148px; width: 960px;">
+<h4 id="orgdb77695">Best practices for high performance datasets processing</h4>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Parallelization</li>
+<li class="fragment appear" data-fragment-index="4">High-Throughput Data Formats</li>
+<li class="fragment appear" data-fragment-index="5">Dedicated Data Processing Workers</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>Ref: <a href="https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469">https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469</a></li>
+
+</ul>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">11.3</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgdb77695" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 148px; width: 960px;">
+<h4 id="orgdb77695">Best practices for high performance datasets processing</h4>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="3">Parallelization</li>
+<li class="fragment appear" data-fragment-index="4">High-Throughput Data Formats</li>
+<li class="fragment appear" data-fragment-index="5">Dedicated Data Processing Workers</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>Ref: <a href="https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469">https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469</a></li>
+
+</ul>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">11.4</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgdb77695" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 148px; width: 960px;">
+<h4 id="orgdb77695">Best practices for high performance datasets processing</h4>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Parallelization</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="4">High-Throughput Data Formats</li>
+<li class="fragment appear" data-fragment-index="5">Dedicated Data Processing Workers</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>Ref: <a href="https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469">https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469</a></li>
+
+</ul>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">11.5</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgdb77695" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 148px; width: 960px;">
+<h4 id="orgdb77695">Best practices for high performance datasets processing</h4>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Parallelization</li>
+<li class="fragment appear visible" data-fragment-index="4">High-Throughput Data Formats</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="5">Dedicated Data Processing Workers</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>Ref: <a href="https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469">https://youtu.be/kNuA2wflygM?feature=shared&amp;t=469</a></li>
+
+</ul>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">11.6</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgbd64c2b" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 152.5px; width: 960px;">
+<h4 id="orgbd64c2b">Sequential I/O</h4>
+
+<div id="org69dfc1a" class="figure">
+<p><img src="sequential-io-intuition.png" alt="sequential-io-intuition.png" width="40%" height="40%">
+</p>
+</div>
+
+<p>
+Characteristics:
+</p>
+
+<ul>
+<li class="fragment appear" data-fragment-index="0">All samples are together in memory, as in one file</li>
+<li class="fragment appear" data-fragment-index="1">Already ordered in disk. Randomization occurs before dataset file creation</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">12</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgbd64c2b" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 152.5px; width: 960px;">
+<h4 id="orgbd64c2b">Sequential I/O</h4>
+
+<div id="org69dfc1a" class="figure">
+<p><img src="sequential-io-intuition.png" alt="sequential-io-intuition.png" width="40%" height="40%">
+</p>
+</div>
+
+<p>
+Characteristics:
+</p>
+
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">All samples are together in memory, as in one file</li>
+<li class="fragment appear" data-fragment-index="1">Already ordered in disk. Randomization occurs before dataset file creation</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">12.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgbd64c2b" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 152.5px; width: 960px;">
+<h4 id="orgbd64c2b">Sequential I/O</h4>
+
+<div id="org69dfc1a" class="figure">
+<p><img src="sequential-io-intuition.png" alt="sequential-io-intuition.png" width="40%" height="40%">
+</p>
+</div>
+
+<p>
+Characteristics:
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">All samples are together in memory, as in one file</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Already ordered in disk. Randomization occurs before dataset file creation</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">12.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org6210f5e" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 205px; width: 960px;">
+<h4 id="org6210f5e">Sequential I/O</h4>
+
+<div id="orgd4eca9f" class="figure">
+<p><img src="sequential-io-intuition.png" alt="sequential-io-intuition.png" width="40%" height="40%">
+</p>
+</div>
+
+<p>
+Performance difference:
+</p>
+
+<ul>
+<li class="fragment appear" data-fragment-index="0">10x faster on usual local storage</li>
+<li class="fragment appear" data-fragment-index="1">Allow simpler/faster network storage</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">13</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org6210f5e" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 205px; width: 960px;">
+<h4 id="org6210f5e">Sequential I/O</h4>
+
+<div id="orgd4eca9f" class="figure">
+<p><img src="sequential-io-intuition.png" alt="sequential-io-intuition.png" width="40%" height="40%">
+</p>
+</div>
+
+<p>
+Performance difference:
+</p>
+
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">10x faster on usual local storage</li>
+<li class="fragment appear" data-fragment-index="1">Allow simpler/faster network storage</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">13.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org6210f5e" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 205px; width: 960px;">
+<h4 id="org6210f5e">Sequential I/O</h4>
+
+<div id="orgd4eca9f" class="figure">
+<p><img src="sequential-io-intuition.png" alt="sequential-io-intuition.png" width="40%" height="40%">
+</p>
+</div>
+
+<p>
+Performance difference:
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">10x faster on usual local storage</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Allow simpler/faster network storage</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">13.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org5b4e841" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 294px; width: 960px;">
+<h4 id="org5b4e841">Pipelining</h4>
+
+<div id="org8fa1f61" class="figure">
+<p><img src="pipelining_example.png" alt="pipelining_example.png" width="70%" height="40%">
+</p>
+</div>
+</section><div class="slide-number slide-number-pdf">14</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org475f267" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 258px; width: 960px;">
+<h4 id="org475f267">Sharding</h4>
+<p>
+Split a huge dataset file in several sequential parts.
+</p>
+
+<p>
+Main advantage: allow <b>parallelization</b>
+</p>
+</section><div class="slide-number slide-number-pdf">15</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org02b5b57" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 267.5px; width: 960px;">
+<h2 id="org02b5b57">The story</h2>
+<p>
+📖
+</p>
+</section><div class="slide-number slide-number-pdf">16</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org12ea9d1" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 133px; width: 960px;">
+<h3 id="org12ea9d1">📖 Solutions considered</h3>
+<ul>
+<li>Local - files dataset</li>
+<li>S3 - files dataset</li>
+<li>S3 - WebDatasets</li>
+<li>Local - polars LazyFrames from parquet highly compressed</li>
+<li>S3 - polars LazyFrames from parquet highly compressed</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">17</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org399dd85" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 164.5px; width: 960px;">
+<h3 id="org399dd85">📖 Custom benchmark framework</h3>
+<p>
+Developed a benchmark framework
+</p>
+
+<ul>
+<li class="fragment appear" data-fragment-index="0">File Loader</li>
+<li class="fragment appear" data-fragment-index="1">Ubiquitous Dataset</li>
+<li class="fragment appear" data-fragment-index="2">Benchmark class</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">18</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org399dd85" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 164.5px; width: 960px;">
+<h3 id="org399dd85">📖 Custom benchmark framework</h3>
+<p>
+Developed a benchmark framework
+</p>
+
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">File Loader</li>
+<li class="fragment appear" data-fragment-index="1">Ubiquitous Dataset</li>
+<li class="fragment appear" data-fragment-index="2">Benchmark class</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">18.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org399dd85" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 164.5px; width: 960px;">
+<h3 id="org399dd85">📖 Custom benchmark framework</h3>
+<p>
+Developed a benchmark framework
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">File Loader</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Ubiquitous Dataset</li>
+<li class="fragment appear" data-fragment-index="2">Benchmark class</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">18.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org399dd85" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 164.5px; width: 960px;">
+<h3 id="org399dd85">📖 Custom benchmark framework</h3>
+<p>
+Developed a benchmark framework
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">File Loader</li>
+<li class="fragment appear visible" data-fragment-index="1">Ubiquitous Dataset</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="2">Benchmark class</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">18.3</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org3c40ea5" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 236px; width: 960px;">
+<h4 id="org3c40ea5">fileLoader Abstraction</h4>
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-line-numbers="" data-highlighted="yes"><table class="hljs-ln"><tbody><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">class</span> <span class="hljs-title class_">fileLoader</span>(<span class="hljs-title class_ inherited__">ABC</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-meta">  @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3">  <span class="hljs-keyword">def</span> <span class="hljs-title function_">load</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4">      self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5">  ) -&gt; IO | IOBase | ContextManager | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">      <span class="hljs-keyword">pass</span></td></tr></tbody></table></code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">19</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orge501bc4" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 183px; width: 960px;">
+<h4 id="orge501bc4">fileLoader example for local files</h4>
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-line-numbers="" data-highlighted="yes"><table class="hljs-ln"><tbody><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-meta">@dataclass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">class</span> <span class="hljs-title class_">FSFileLoader</span>(<span class="hljs-title class_ inherited__">fileLoader</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4">        self, file_path: Path, mode: <span class="hljs-built_in">str</span> = <span class="hljs-string">"r"</span>, encoding: <span class="hljs-type">Optional</span>[<span class="hljs-built_in">str</span>] = <span class="hljs-literal">None</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5">    ) -&gt; IO:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">        logging.info(<span class="hljs-string">f"Loading <span class="hljs-subst">{file_path}</span>..."</span>)</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        <span class="hljs-keyword">return</span> file_path.<span class="hljs-built_in">open</span>(</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">            mode=mode,</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">            encoding=encoding,</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10">        )</td></tr></tbody></table></code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">20</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orga6d4aa3" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 115px; width: 960px;">
+<h4 id="orga6d4aa3">fileLoader example for S3 parquet files</h4>
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-line-numbers="" data-highlighted="yes"><table class="hljs-ln"><tbody><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-meta">@dataclass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">class</span> <span class="hljs-title class_">S3ParquetLoader</span>(<span class="hljs-title class_ inherited__">fileLoader</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3">    s3_bucket_name: <span class="hljs-built_in">str</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load</span>(<span class="hljs-params"><span class="hljs-params"> </span></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6"><span class="hljs-params">        self,</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7"><span class="hljs-params">        file_path: Path,</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8"><span class="hljs-params">        schema: <span class="hljs-type">Optional</span>[<span class="hljs-type">Dict</span>] = <span class="hljs-literal">None</span>,</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9"><span class="hljs-params">        aws_region: <span class="hljs-built_in">str</span> = <span class="hljs-string">"eu-central-1"</span>,</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"><span class="hljs-params">    </span>) -&gt; pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11">        logging.info(<span class="hljs-string">f"Loading <span class="hljs-subst">{file_path}</span>..."</span>)</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">        <span class="hljs-keyword">return</span> pl.scan_parquet(</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">            <span class="hljs-string">f"s3://<span class="hljs-subst">{self.s3_bucket_name}</span>/<span class="hljs-subst">{file_path}</span>"</span>,</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14">            schema=schema,</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15">            storage_options={<span class="hljs-string">"aws_region"</span>: aws_region},</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">        )</td></tr></tbody></table></code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">21</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7365379" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h4 id="org7365379">Ubiquitous Dataset Abstraction</h4>
+<p>
+Load a <a href="https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html#creating-a-custom-dataset-for-your-files">custom Pytorch Dataset</a> no matter where/how the samples are stored.
+</p>
+
+<ul>
+<li class="fragment appear" data-fragment-index="0">Just needs the length calculation and the <span class="underline"><span class="underline">iter</span></span> functionality</li>
+<li class="fragment appear" data-fragment-index="1">Inherits pytorch Dataset class as parent so it's automatically compatible with pytorch</li>
+
+</ul>
+
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-line-numbers="" data-highlighted="yes"><table class="hljs-ln"><tbody><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">import</span> polars <span class="hljs-keyword">as</span> pl</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"><span class="hljs-keyword">class</span> <span class="hljs-title class_">UbiquitousDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">    ) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]] | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self, idx</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="17"><div class="hljs-ln-n" data-line-number="17"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="17">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="18"><div class="hljs-ln-n" data-line-number="18"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="18"> </td></tr></tbody></table></code><code class="python hljs language-python fragment has-highlights" data-line-numbers="1,4" data-highlighted="yes" data-fragment-index="2"><table class="hljs-ln"><tbody><tr class="highlight-line"><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">import</span> polars <span class="hljs-keyword">as</span> pl</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3"> </td></tr><tr class="highlight-line"><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"><span class="hljs-keyword">class</span> <span class="hljs-title class_">UbiquitousDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">    ) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]] | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self, idx</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="17"><div class="hljs-ln-n" data-line-number="17"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="17">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="18"><div class="hljs-ln-n" data-line-number="18"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="18"> </td></tr></tbody></table></code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">22</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7365379" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h4 id="org7365379">Ubiquitous Dataset Abstraction</h4>
+<p>
+Load a <a href="https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html#creating-a-custom-dataset-for-your-files">custom Pytorch Dataset</a> no matter where/how the samples are stored.
+</p>
+
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">Just needs the length calculation and the <span class="underline"><span class="underline">iter</span></span> functionality</li>
+<li class="fragment appear" data-fragment-index="1">Inherits pytorch Dataset class as parent so it's automatically compatible with pytorch</li>
+
+</ul>
+
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-line-numbers="" data-highlighted="yes"><table class="hljs-ln"><tbody><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">import</span> polars <span class="hljs-keyword">as</span> pl</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"><span class="hljs-keyword">class</span> <span class="hljs-title class_">UbiquitousDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">    ) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]] | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self, idx</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="17"><div class="hljs-ln-n" data-line-number="17"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="17">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="18"><div class="hljs-ln-n" data-line-number="18"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="18"> </td></tr></tbody></table></code><code class="python hljs language-python fragment has-highlights" data-line-numbers="1,4" data-highlighted="yes" data-fragment-index="2"><table class="hljs-ln"><tbody><tr class="highlight-line"><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">import</span> polars <span class="hljs-keyword">as</span> pl</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3"> </td></tr><tr class="highlight-line"><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"><span class="hljs-keyword">class</span> <span class="hljs-title class_">UbiquitousDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">    ) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]] | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self, idx</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="17"><div class="hljs-ln-n" data-line-number="17"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="17">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="18"><div class="hljs-ln-n" data-line-number="18"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="18"> </td></tr></tbody></table></code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">22.1</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7365379" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h4 id="org7365379">Ubiquitous Dataset Abstraction</h4>
+<p>
+Load a <a href="https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html#creating-a-custom-dataset-for-your-files">custom Pytorch Dataset</a> no matter where/how the samples are stored.
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Just needs the length calculation and the <span class="underline"><span class="underline">iter</span></span> functionality</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Inherits pytorch Dataset class as parent so it's automatically compatible with pytorch</li>
+
+</ul>
+
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-line-numbers="" data-highlighted="yes"><table class="hljs-ln"><tbody><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">import</span> polars <span class="hljs-keyword">as</span> pl</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"><span class="hljs-keyword">class</span> <span class="hljs-title class_">UbiquitousDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">    ) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]] | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self, idx</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="17"><div class="hljs-ln-n" data-line-number="17"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="17">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="18"><div class="hljs-ln-n" data-line-number="18"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="18"> </td></tr></tbody></table></code><code class="python hljs language-python fragment has-highlights" data-line-numbers="1,4" data-highlighted="yes" data-fragment-index="2"><table class="hljs-ln"><tbody><tr class="highlight-line"><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">import</span> polars <span class="hljs-keyword">as</span> pl</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3"> </td></tr><tr class="highlight-line"><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"><span class="hljs-keyword">class</span> <span class="hljs-title class_">UbiquitousDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">    ) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]] | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self, idx</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="17"><div class="hljs-ln-n" data-line-number="17"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="17">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="18"><div class="hljs-ln-n" data-line-number="18"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="18"> </td></tr></tbody></table></code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">22.2</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7365379" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h4 id="org7365379">Ubiquitous Dataset Abstraction</h4>
+<p>
+Load a <a href="https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html#creating-a-custom-dataset-for-your-files">custom Pytorch Dataset</a> no matter where/how the samples are stored.
+</p>
+
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Just needs the length calculation and the <span class="underline"><span class="underline">iter</span></span> functionality</li>
+<li class="fragment appear visible" data-fragment-index="1">Inherits pytorch Dataset class as parent so it's automatically compatible with pytorch</li>
+
+</ul>
+
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-line-numbers="" data-highlighted="yes"><table class="hljs-ln"><tbody><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">import</span> polars <span class="hljs-keyword">as</span> pl</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"><span class="hljs-keyword">class</span> <span class="hljs-title class_">UbiquitousDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">    ) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]] | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self, idx</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="17"><div class="hljs-ln-n" data-line-number="17"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="17">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="18"><div class="hljs-ln-n" data-line-number="18"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="18"> </td></tr></tbody></table></code><code class="python hljs language-python fragment has-highlights visible current-fragment" data-line-numbers="1,4" data-highlighted="yes" data-fragment-index="2"><table class="hljs-ln"><tbody><tr class="highlight-line"><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2"><span class="hljs-keyword">import</span> polars <span class="hljs-keyword">as</span> pl</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3"> </td></tr><tr class="highlight-line"><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4"><span class="hljs-keyword">class</span> <span class="hljs-title class_">UbiquitousDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params"></span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">        self, file_path: Path, *args, **kwargs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">    ) -&gt; <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]] | pl.LazyFrame:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="12"><div class="hljs-ln-n" data-line-number="12"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="12">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="13"><div class="hljs-ln-n" data-line-number="13"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="13">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="14"><div class="hljs-ln-n" data-line-number="14"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="14"> </td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="15"><div class="hljs-ln-n" data-line-number="15"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="15"><span class="hljs-meta">    @abstractmethod</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="16"><div class="hljs-ln-n" data-line-number="16"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="16">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self, idx</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="17"><div class="hljs-ln-n" data-line-number="17"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="17">        <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="18"><div class="hljs-ln-n" data-line-number="18"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="18"> </td></tr></tbody></table></code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">22.3</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org3728a54" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 115px; width: 960px;">
+<h4 id="org3728a54">S3ParquetDataset example</h4>
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-highlighted="yes"><span class="hljs-keyword">class</span> <span class="hljs-title class_">S3ParquetDataset</span>(<span class="hljs-title class_ inherited__">UbiquitousDataset</span>):
+  <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">
+      self,
+      s3_bucket_name: <span class="hljs-built_in">str</span>,
+      dataset_file_path: Path,
+      _samples_dir_path: <span class="hljs-type">Optional</span>[Path] = <span class="hljs-literal">None</span>,
+  </span>) -&gt; <span class="hljs-literal">None</span>:
+      self.s3_bucket_name = s3_bucket_name
+      self.file_loader: S3ParquetLoader = S3ParquetLoader(s3_bucket_name)
+      self.dataset_file_path = dataset_file_path
+      self._samples_dir_path = _samples_dir_path
+
+      self.items: pl.DataFrame = self.load_parquet_dataset().collect(
+          engine=<span class="hljs-string">"streaming"</span>
+      )
+      self.df_length: <span class="hljs-built_in">int</span> = self.length()
+
+<span class="hljs-meta">  @property</span>
+  <span class="hljs-keyword">def</span> <span class="hljs-title function_">samples_dir_path</span>(<span class="hljs-params">self</span>) -&gt; Path:
+      <span class="hljs-keyword">if</span> self._samples_dir_path <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+          <span class="hljs-keyword">return</span> self.dataset_file_path.parent
+
+      <span class="hljs-keyword">return</span> self._samples_dir_path
+
+  <span class="hljs-keyword">def</span> <span class="hljs-title function_">__len__</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:
+      <span class="hljs-keyword">return</span> self.df_length
+
+  <span class="hljs-keyword">def</span> <span class="hljs-title function_">__getitem__</span>(<span class="hljs-params">self, idx: <span class="hljs-built_in">int</span></span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:
+      <span class="hljs-keyword">return</span> self.get_item()
+
+  <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_parquet_dataset</span>(<span class="hljs-params">self</span>) -&gt; pl.LazyFrame:
+      <span class="hljs-keyword">try</span>:
+          df = self.file_loader.load(
+              self.dataset_file_path,
+              schema={
+                  <span class="hljs-string">"sample_path"</span>: pl.String,
+                  <span class="hljs-string">"label"</span>: pl.String,
+                  <span class="hljs-string">"sample"</span>: pl.<span class="hljs-type">List</span>(pl.<span class="hljs-type">List</span>(pl.<span class="hljs-type">List</span>(pl.Float64))),
+              },
+          ).select(pl.col(<span class="hljs-string">"sample"</span>), pl.col(<span class="hljs-string">"label"</span>))
+
+          <span class="hljs-keyword">return</span> df
+      <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:
+          logging.error(e)
+          <span class="hljs-keyword">raise</span> e
+
+  <span class="hljs-keyword">def</span> <span class="hljs-title function_">load_dataset</span>(<span class="hljs-params">self, *args, **kwargs</span>) -&gt; pl.LazyFrame:
+      <span class="hljs-keyword">return</span> self.load_parquet_dataset()
+
+  <span class="hljs-keyword">def</span> <span class="hljs-title function_">length</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:
+      <span class="hljs-keyword">return</span> self.items.select(pl.<span class="hljs-built_in">len</span>()).item()
+
+  <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_item</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">str</span>(self.items[<span class="hljs-string">"sample"</span>][idx].to_list()), self.items[<span class="hljs-string">"label"</span>][idx]
+
+</code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">23</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org0a04331" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 81.5px; width: 960px;">
+<h4 id="org0a04331">Benchmark class</h4>
+<ul>
+<li>Mock training (just iterating through samples using the Dataloader default way)</li>
+<li>Timer</li>
+
+</ul>
+
+<div class="org-src-container">
+
+<pre class="code-wrapper"><code class="python hljs language-python" data-line-numbers="" data-highlighted="yes"><table class="hljs-ln"><tbody><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="1"><div class="hljs-ln-n" data-line-number="1"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="1"><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_mock</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">float</span>:</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="2"><div class="hljs-ln-n" data-line-number="2"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="2">      t = Timer(name=<span class="hljs-string">f"<span class="hljs-subst">{self.load_from}</span>-<span class="hljs-subst">{self.load_as}</span>-train-mock"</span>)</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="3"><div class="hljs-ln-n" data-line-number="3"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="3">      sum_t = <span class="hljs-number">0</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="4"><div class="hljs-ln-n" data-line-number="4"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="4">      <span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.train_epochs):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="5"><div class="hljs-ln-n" data-line-number="5"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="5">          t.start()</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="6"><div class="hljs-ln-n" data-line-number="6"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="6">          <span class="hljs-comment"># for train_features, train_labels in tqdm(self.dataloader):</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="7"><div class="hljs-ln-n" data-line-number="7"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="7">          <span class="hljs-keyword">for</span> train_features, train_labels <span class="hljs-keyword">in</span> tqdm(self.dataloader):</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="8"><div class="hljs-ln-n" data-line-number="8"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="8">              <span class="hljs-keyword">pass</span></td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="9"><div class="hljs-ln-n" data-line-number="9"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="9">          sum_t += t.stop()</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="10"><div class="hljs-ln-n" data-line-number="10"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="10">      mean_t = sum_t / self.train_epochs</td></tr><tr><td class="hljs-ln-line hljs-ln-numbers" data-line-number="11"><div class="hljs-ln-n" data-line-number="11"></div></td><td class="hljs-ln-line hljs-ln-code" data-line-number="11">      <span class="hljs-keyword">return</span> mean_t</td></tr></tbody></table></code></pre>
+</div>
+</section><div class="slide-number slide-number-pdf">24</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org7c7aee9" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 224px; width: 960px;">
+<h2 id="org7c7aee9">Results - Benchmarks</h2>
+<ul>
+<li>Not real Training</li>
+<li>All following benchmarks have been calculated from wiris laptop</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">25</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org980a27b" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 290px; width: 960px;">
+<h3 id="org980a27b">📖 Local - files dataset</h3>
+<ul>
+<li class="fragment appear" data-fragment-index="0">No sequential I/O</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">26</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org980a27b" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 290px; width: 960px;">
+<h3 id="org980a27b">📖 Local - files dataset</h3>
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">No sequential I/O</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">26.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org09d6a7a" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 129.5px; width: 960px;">
+<h4 id="org09d6a7a">Results</h4>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Size (Cloud storage)</th>
+<th scope="col" class="org-left">Dataset creation time</th>
+<th scope="col" class="org-left">Size (Local Disk)</th>
+<th scope="col" class="org-left">Download time b4 training</th>
+<th scope="col" class="org-left">Training (1 epoch) time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">~40 GB</td>
+<td class="org-left">0s (already created)</td>
+<td class="org-left">~40 GB</td>
+<td class="org-left">15325.533 s</td>
+<td class="org-left">61.3527 s</td>
+</tr>
+</tbody>
+</table>
+</section><div class="slide-number slide-number-pdf">27</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgf44651c" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 290px; width: 960px;">
+<h3 id="orgf44651c">📖 S3 - files dataset</h3>
+<ul>
+<li class="fragment appear" data-fragment-index="0">No sequential I/O</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">28</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-orgf44651c" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 290px; width: 960px;">
+<h3 id="orgf44651c">📖 S3 - files dataset</h3>
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">No sequential I/O</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">28.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org98f7265" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 119.5px; width: 960px;">
+<h4 id="org98f7265">Results</h4>
+<p>
+…
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Size (Cloud storage)</th>
+<th scope="col" class="org-left">Dataset creation time</th>
+<th scope="col" class="org-left">Size (Local Disk)</th>
+<th scope="col" class="org-left">Download time b4 training</th>
+<th scope="col" class="org-left">Training (1 epoch) time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">~40 GB</td>
+<td class="org-left">0s (already created)</td>
+<td class="org-left">0 GB</td>
+<td class="org-left">0 s</td>
+<td class="org-left">22223.2921 s</td>
+</tr>
+</tbody>
+</table>
+</section><div class="slide-number slide-number-pdf">29</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07ed66c" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 80.5px; width: 960px;">
+<h3 id="org07ed66c">📖 S3 - WebDatasets</h3>
+<ul>
+<li class="fragment appear" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Allows streaming and caching</li>
+<li class="fragment appear" data-fragment-index="4">Old
+<ul>
+<li>Not supported by Pytorch anymore</li>
+<li>Not direct support to s3 buckets (needs a public url)</li>
+<li><a href="https://github.com/webdataset/webdataset/blob/main/ISSUES.md">Issues</a></li>
+
+</ul></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+NOTE: When using WebDataset with caching enabled, each shard is downloaded
+completely before processing, which can delay the start of training. This is
+because caching requires the entire shard to be available locally before it can
+be used, unlike streaming, which processes data as it arrives.
+</p>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">30</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07ed66c" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 80.5px; width: 960px;">
+<h3 id="org07ed66c">📖 S3 - WebDatasets</h3>
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Allows streaming and caching</li>
+<li class="fragment appear" data-fragment-index="4">Old
+<ul>
+<li>Not supported by Pytorch anymore</li>
+<li>Not direct support to s3 buckets (needs a public url)</li>
+<li><a href="https://github.com/webdataset/webdataset/blob/main/ISSUES.md">Issues</a></li>
+
+</ul></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+NOTE: When using WebDataset with caching enabled, each shard is downloaded
+completely before processing, which can delay the start of training. This is
+because caching requires the entire shard to be available locally before it can
+be used, unlike streaming, which processes data as it arrives.
+</p>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">30.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07ed66c" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 80.5px; width: 960px;">
+<h3 id="org07ed66c">📖 S3 - WebDatasets</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Allows streaming and caching</li>
+<li class="fragment appear" data-fragment-index="4">Old
+<ul>
+<li>Not supported by Pytorch anymore</li>
+<li>Not direct support to s3 buckets (needs a public url)</li>
+<li><a href="https://github.com/webdataset/webdataset/blob/main/ISSUES.md">Issues</a></li>
+
+</ul></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+NOTE: When using WebDataset with caching enabled, each shard is downloaded
+completely before processing, which can delay the start of training. This is
+because caching requires the entire shard to be available locally before it can
+be used, unlike streaming, which processes data as it arrives.
+</p>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">30.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07ed66c" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 80.5px; width: 960px;">
+<h3 id="org07ed66c">📖 S3 - WebDatasets</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Allows streaming and caching</li>
+<li class="fragment appear" data-fragment-index="4">Old
+<ul>
+<li>Not supported by Pytorch anymore</li>
+<li>Not direct support to s3 buckets (needs a public url)</li>
+<li><a href="https://github.com/webdataset/webdataset/blob/main/ISSUES.md">Issues</a></li>
+
+</ul></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+NOTE: When using WebDataset with caching enabled, each shard is downloaded
+completely before processing, which can delay the start of training. This is
+because caching requires the entire shard to be available locally before it can
+be used, unlike streaming, which processes data as it arrives.
+</p>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">30.3</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07ed66c" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 80.5px; width: 960px;">
+<h3 id="org07ed66c">📖 S3 - WebDatasets</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="3">Allows streaming and caching</li>
+<li class="fragment appear" data-fragment-index="4">Old
+<ul>
+<li>Not supported by Pytorch anymore</li>
+<li>Not direct support to s3 buckets (needs a public url)</li>
+<li><a href="https://github.com/webdataset/webdataset/blob/main/ISSUES.md">Issues</a></li>
+
+</ul></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+NOTE: When using WebDataset with caching enabled, each shard is downloaded
+completely before processing, which can delay the start of training. This is
+because caching requires the entire shard to be available locally before it can
+be used, unlike streaming, which processes data as it arrives.
+</p>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">30.4</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org07ed66c" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 80.5px; width: 960px;">
+<h3 id="org07ed66c">📖 S3 - WebDatasets</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Allows streaming and caching</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="4">Old
+<ul>
+<li>Not supported by Pytorch anymore</li>
+<li>Not direct support to s3 buckets (needs a public url)</li>
+<li><a href="https://github.com/webdataset/webdataset/blob/main/ISSUES.md">Issues</a></li>
+
+</ul></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+NOTE: When using WebDataset with caching enabled, each shard is downloaded
+completely before processing, which can delay the start of training. This is
+because caching requires the entire shard to be available locally before it can
+be used, unlike streaming, which processes data as it arrives.
+</p>
+
+</aside>
+</section><div class="slide-number slide-number-pdf">30.5</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4997a00" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 99.5px; width: 960px;">
+<h4 id="org4997a00">Results</h4>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Size (Cloud storage)</th>
+<th scope="col" class="org-left">Dataset creation time</th>
+<th scope="col" class="org-left">Size (Local Disk)</th>
+<th scope="col" class="org-left">Download time b4 training</th>
+<th scope="col" class="org-left">Training (1 epoch) time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">~40 GB*</td>
+<td class="org-left">?</td>
+<td class="org-left">0 GB</td>
+<td class="org-left">0.0010 s ?</td>
+<td class="org-left">? s</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+*Tar compression may be improved
+</p>
+
+<p>
+😢
+</p>
+</section><div class="slide-number slide-number-pdf">31</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org53f6efe" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h3 id="org53f6efe">📖 Local - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+
+<p>
+<b>Note</b>: I found some difficulties testing different parquet files cases as the
+generation and later transmission to S3 was not working if not using a high
+compression.
+</p>
+</section><div class="slide-number slide-number-pdf">32</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org53f6efe" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h3 id="org53f6efe">📖 Local - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+
+<p>
+<b>Note</b>: I found some difficulties testing different parquet files cases as the
+generation and later transmission to S3 was not working if not using a high
+compression.
+</p>
+</section><div class="slide-number slide-number-pdf">32.1</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org53f6efe" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h3 id="org53f6efe">📖 Local - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+
+<p>
+<b>Note</b>: I found some difficulties testing different parquet files cases as the
+generation and later transmission to S3 was not working if not using a high
+compression.
+</p>
+</section><div class="slide-number slide-number-pdf">32.2</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org53f6efe" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h3 id="org53f6efe">📖 Local - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+
+<p>
+<b>Note</b>: I found some difficulties testing different parquet files cases as the
+generation and later transmission to S3 was not working if not using a high
+compression.
+</p>
+</section><div class="slide-number slide-number-pdf">32.3</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org53f6efe" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h3 id="org53f6efe">📖 Local - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+
+<p>
+<b>Note</b>: I found some difficulties testing different parquet files cases as the
+generation and later transmission to S3 was not working if not using a high
+compression.
+</p>
+</section><div class="slide-number slide-number-pdf">32.4</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org53f6efe" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h3 id="org53f6efe">📖 Local - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+
+<p>
+<b>Note</b>: I found some difficulties testing different parquet files cases as the
+generation and later transmission to S3 was not working if not using a high
+compression.
+</p>
+</section><div class="slide-number slide-number-pdf">32.5</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org53f6efe" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h3 id="org53f6efe">📖 Local - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear visible" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+
+<p>
+<b>Note</b>: I found some difficulties testing different parquet files cases as the
+generation and later transmission to S3 was not working if not using a high
+compression.
+</p>
+</section><div class="slide-number slide-number-pdf">32.6</div></div><div class="pdf-page" style="height: 1454px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org53f6efe" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 14px; width: 960px;">
+<h3 id="org53f6efe">📖 Local - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear visible" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear visible" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+
+<p>
+<b>Note</b>: I found some difficulties testing different parquet files cases as the
+generation and later transmission to S3 was not working if not using a high
+compression.
+</p>
+</section><div class="slide-number slide-number-pdf">32.7</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org0b6930f" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 109.5px; width: 960px;">
+<h4 id="org0b6930f">Results</h4>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Size (Cloud storage)</th>
+<th scope="col" class="org-left">Dataset creation time</th>
+<th scope="col" class="org-left">Size (Local Disk)</th>
+<th scope="col" class="org-left">Download time b4 training</th>
+<th scope="col" class="org-left">Training (1 epoch) time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">3 GB</td>
+<td class="org-left">22.6430 s</td>
+<td class="org-left">3 GB</td>
+<td class="org-left">309.793 s</td>
+<td class="org-left">277.5 s</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+😏
+</p>
+</section><div class="slide-number slide-number-pdf">33</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4f66032" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 40.5px; width: 960px;">
+<h3 id="org4f66032">📖 S3 - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">34</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4f66032" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 40.5px; width: 960px;">
+<h3 id="org4f66032">📖 S3 - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible current-fragment" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">34.1</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4f66032" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 40.5px; width: 960px;">
+<h3 id="org4f66032">📖 S3 - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">34.2</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4f66032" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 40.5px; width: 960px;">
+<h3 id="org4f66032">📖 S3 - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="2">Sharding</li>
+<li class="fragment appear" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">34.3</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4f66032" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 40.5px; width: 960px;">
+<h3 id="org4f66032">📖 S3 - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">34.4</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4f66032" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 40.5px; width: 960px;">
+<h3 id="org4f66032">📖 S3 - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">34.5</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4f66032" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 40.5px; width: 960px;">
+<h3 id="org4f66032">📖 S3 - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear visible" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">34.6</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org4f66032" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 40.5px; width: 960px;">
+<h3 id="org4f66032">📖 S3 - polars LazyFrames from parquet highly compressed</h3>
+<ul>
+<li class="fragment appear visible" data-fragment-index="0">Sequential I/O</li>
+<li class="fragment appear visible" data-fragment-index="1">Pipelining and parallelization (scan<sub>async</sub>)</li>
+<li class="fragment appear visible" data-fragment-index="2">Sharding</li>
+<li class="fragment appear visible" data-fragment-index="3">Avoid memory consummption that is not needed</li>
+<li class="fragment appear visible" data-fragment-index="4">Able to export to any type, even pil objects, numpy and tensors</li>
+<li class="fragment appear visible" data-fragment-index="5">Optimized loading and exporting functions to cloud storage</li>
+<li class="fragment appear visible current-fragment" data-fragment-index="6">Can share workload with GPU</li>
+
+</ul>
+</section><div class="slide-number slide-number-pdf">34.7</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org23d2839" class="present" aria-hidden="true" hidden="" style="display: block; left: 19px; top: 49px; width: 960px;">
+<h4 id="org23d2839">Results</h4>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+
+<col class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Size (Cloud storage)</th>
+<th scope="col" class="org-left">Dataset creation time</th>
+<th scope="col" class="org-left">Size (Local Disk)</th>
+<th scope="col" class="org-left">Download time b4 training</th>
+<th scope="col" class="org-left">Training (1 epoch) time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">3 GB</td>
+<td class="org-left">403.6961 s</td>
+<td class="org-left">0 GB</td>
+<td class="org-left">0 s</td>
+<td class="org-left">249.4792 s</td>
+</tr>
+
+<tr>
+<td class="org-left">&nbsp;</td>
+<td class="org-left">368.1926 s (streaming)</td>
+<td class="org-left">&nbsp;</td>
+<td class="org-left">&nbsp;</td>
+<td class="org-left">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+😏
+</p>
+</section><div class="slide-number slide-number-pdf">35</div></div><div class="pdf-page" style="height: 727px; background: rgb(17, 17, 17);"><div class="slide-background present" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><section id="slide-org57871d2" hidden="" aria-hidden="true" class="present" style="display: block; left: 19px; top: 313px; width: 960px;">
+<h2 id="org57871d2">🧠 Brainstorming</h2>
+</section><div class="slide-number slide-number-pdf">36</div></div></div>
+<div class="backgrounds"><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div><div class="slide-background stack future" style="display: block;" data-loaded="true"><div class="slide-background-content"></div></div></div><div class="slide-number" style="display: none;"><a href="#/sec-title-slide">
+					<span class="slide-number-a">1</span>
+					</a></div><aside class="controls" style="display: block;" data-controls-layout="bottom-right" data-controls-back-arrows="faded"><button class="navigate-left" aria-label="previous slide" disabled="disabled"><div class="controls-arrow"></div></button>
+			<button class="navigate-right enabled" aria-label="next slide"><div class="controls-arrow"></div></button>
+			<button class="navigate-up" aria-label="above slide" disabled="disabled"><div class="controls-arrow"></div></button>
+			<button class="navigate-down enabled highlight" aria-label="below slide"><div class="controls-arrow"></div></button></aside><div class="progress" style="display: block;"><span style="transform: scaleX(0);"></span></div><div class="speaker-notes" data-prevent-swipe="" tabindex="0"></div><div class="pause-overlay"><button class="resume-button">Resume presentation</button></div><div style="position: absolute; height: 1px; width: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px);" class="aria-status" aria-live="polite" aria-atomic="true">Data ingestion architecture 4-7-25 Dani - ML Team </div></div>
+<script src="benchmark_results_4-7-25_presentation_files/reveal.js"></script>
+<script src="benchmark_results_4-7-25_presentation_files/highlight.js"></script>
+<script src="benchmark_results_4-7-25_presentation_files/notes.js"></script>
+<script src="benchmark_results_4-7-25_presentation_files/zoom.js"></script>
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+mouseWheel: false,
+fragmentInURL: false,
+hashOneBasedIndex: false,
+pdfSeparateFragments: true,
+overview: true,
+
+transition: 'none',
+transitionSpeed: 'default',
+
+// Plugins with reveal.js 4.x
+plugins: [ RevealHighlight, RevealNotes, RevealZoom ],
+
+// Optional libraries used to extend reveal.js
+dependencies: [
+]
+
+});
+</script>
+
+
+</body><grammarly-desktop-integration data-grammarly-shadow-root="true"></grammarly-desktop-integration></html>
